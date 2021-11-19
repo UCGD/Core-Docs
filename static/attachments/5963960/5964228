@@ -1,0 +1,105 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+my $usage = "
+Usage:
+     ssh_mount <login\@server:path>
+     ssh_mount <login\@server:path> <user:group>
+
+Example:
+     sudo ssh_mount u0123456\@kingspeak.chpc.utah.edu:/scratch/ucgd
+     sudo ssh_mount u0123456\@kingspeak.chpc.utah.edu:/scratch/ucgd john:staff
+
+Description:
+     Script to mount CHPC directories over SSH on OSX and Linux using SSHF.
+     You will need to run as root or via sudo to create the mount. You must
+     supply the server and path to mount along with ID mappings to collapse
+     the user:group from the server side (i.e. provide the local user and
+     group on your Mac that you want thing to map to). The new mount will
+     show up in the Finder window and under the /Volumes folder on your Mac.
+     On Linux the mount will appear under the /mnt folder. Soflinks on the
+     server will also be collapsed and will be displayed locally as real
+     files rather than softlinks.
+
+";
+
+#Print usage statement
+if(!@ARGV){
+    print $usage;
+    exit(1);
+}
+
+#Get arguments
+my $mount = shift;
+my $idmap = shift;
+if(!$idmap){
+    $idmap = (defined($ENV{SUDO_UID}) && defined($ENV{SUDO_GID})) ?
+	getpwuid($ENV{SUDO_UID}).":".getgrgid($ENV{SUDO_GID})
+	:
+	getpwuid($<).":".getgrgid($();
+}
+
+#Parse and validate arguments
+die "ERROR: Failure to specify server and path to mount\n" if(!$mount);
+die "ERROR: Failure to specify USER:GROUP for ID mappng\n" if(!$idmap);
+
+my ($user, $group) = split(/\:/, $idmap);
+die "ERROR: Invalid ID map. Expected format 'USER:GROUP'\n"
+    if(!defined($user) || !defined($group));
+
+my $uid = getpwnam($user);
+my $gid = getgrnam($group);
+die "ERROR: Invalid user: '$user'\n" if(! defined($uid));
+die "ERROR: Invalid group: '$group'\n" if(! defined($gid));
+
+my ($login, $server, $path) = $mount =~ /^(?:([^\@]+)\@)?(?:([^\:]+)\:)([^\:]+)?$/;
+die "ERROR: Invalid server/path. Expected format 'LOGIN\@:SERVER:PATH'\n"
+    if(!defined($server));
+$path = '~' if(! length($path));
+$path =~ s/\/+$//;
+$path = '/' if($path eq '');
+
+#make sure I have root permissions
+if($> != 0){
+    print STDERR "Mounting via sudo...\n";
+    exec('sudo', $^X, $0, $mount, $idmap);
+}
+
+#Build volume name
+my ($short1) = $server =~ /^([^\.]+).*$/;
+$short1 = 'chpc' if(!length($short1));
+
+my ($short2) = $path =~ /([^\/]+)$/;
+$short2 = '' if($path eq '/');
+
+my $volume = "$short1";
+$volume .= ":$short2" if(length($short2));
+
+#Remove existing volumes
+my $mnt_base = (-d "/Volumes") ? "/Volumes" : "/mnt";
+if(-d "$mnt_base/$volume"){
+    warn "WARNING: Mount appears to already exists and will be unmounted before remounting\n";
+    system('umount', '-f', "$mnt_base/$volume") and die "ERROR: Unmount failed\n";
+    sleep 1;
+}
+
+#Make and mount volume
+if(! -d "$mnt_base/$volume"){
+    mkdir("$mnt_base/$volume") or die "ERROR: $!\n";
+}
+
+my @cmd = ('sudo',
+	   'sshfs',
+	   '-o' => "volname=$volume",
+	   '-o' => 'idmap=user',
+	   '-o' => "uid=$uid",
+	   '-o' => "gid=$gid",
+	   '-o' => 'allow_other',
+	   '-o' => 'default_permissions',
+	   '-o' => 'follow_symlinks',
+	   '-o' => 'local',
+	   $mount,
+	   "$mnt_base/$volume");
+exec @cmd;

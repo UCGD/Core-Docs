@@ -1,0 +1,58 @@
+{
+    "name": "VAR Pipeline",
+    "status": "Running",
+    "description": "Variant Calling Pipeline",
+    "steps": {
+            "ProjectSetup": {
+                "name": "Project Setup",
+                "status": "complete",
+                "steps": {
+                    "SamplesManifest": {
+                        "name": "Load Samples Manifest",
+                        "status": "complete",
+                        "status_msg": "Processed Manifest File manifest123.csv"
+                    },
+                    "SamplesData": {
+                        "name": "Download Sample Fastq Data",
+                        "status": "complete",
+                        "status_msg": "Downloaded 52 of 52 files"
+                    } 
+                }
+            },
+            "PipelineProcessing": {
+                "name": "VAR pipeline",
+                "status": "running",
+                "steps": {
+                    "CRAMs": {
+                        "name": "Polished CRAM Generation",
+                        "status": "complete",
+                        "status_msg": "Processed 26 of 26 CRAMS"
+                    },
+                    "GVCFs": {
+                        "name": "GVCF Generation",
+                        "status": "complete",
+                        "status_msg": "Processed 26 of 26 GVCFs and complete VCF"
+                    },
+                    "PipelineQC": {
+                        "name": "Pipeline QC",
+                        "status": "complete",
+                        "status_msg": "Reported low read coverage for blah blah sample"
+                    },
+                    "MosaicCLI": {
+                        "name": "Mosaic Standard Metrics",
+                        "status": "complete",
+                        "status_msg": "Metrics successfully generated"
+                    }
+                }
+            },
+            "ProjectReview": {
+                "name": "VAR Project Review",
+                "status": "pending"
+            },
+            "ProjectComplete": {
+                "name": "VAR Project Complete",
+                "status": "pending"
+            }
+    }
+    
+}
