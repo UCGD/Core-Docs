@@ -8,13 +8,13 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
 const config = {
   title: 'UCGD Core',
   tagline: 'Utah Center for Genetic Discovery Core Facility',
-  url: 'https://victory.genetics.utah.edu',
-  baseUrl: '/',
+  url: 'https://ucgd.github.io',
+  baseUrl: '/Core-Docs/',
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
   favicon: 'img/favicon.ico',
   organizationName: 'UCGD', // Usually your GitHub org/user name.
-  projectName: 'docusaurus', // Usually your repo name.
+  projectName: 'Core-Docs', // Usually your repo name.
 
   presets: [
     [
@@ -24,13 +24,13 @@ const config = {
         docs: {
           sidebarPath: require.resolve('./sidebars.js'),
           // Please change this to your repo.
-          editUrl: 'https://github.com/UCGD/docusaurus/edit/main/website/',
+          editUrl: 'https://github.com/UCGD/Core-Docs/docs/',
         },
         blog: {
           showReadingTime: true,
           // Please change this to your repo.
           editUrl:
-            'https://github.com/UCGD/docusaurus/edit/main/website/blog/',
+            'https://github.com/UCGD/Core-Docs/blog/',
         },
         theme: {
           customCss: require.resolve('./src/css/custom.css'),
@@ -57,7 +57,7 @@ const config = {
           },
           {to: '/blog', label: 'Blog', position: 'left'},
           {
-            href: 'https://github.com/UCGD/docusaurus',
+            href: 'https://github.com/UCGD/Core-Docs',
             label: 'GitHub',
             position: 'right',
           },
@@ -101,7 +101,7 @@ const config = {
               },
               {
                 label: 'GitHub',
-                href: 'https://github.com/facebook/docusaurus',
+                href: 'https://github.com/UCGD/Core-Docs',
               },
             ],
           },

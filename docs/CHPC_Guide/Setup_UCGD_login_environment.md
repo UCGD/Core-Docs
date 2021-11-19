@@ -6,7 +6,7 @@ title: Setup UCGD login environment
 
 To get started you must first have an account with CHPC and be logged in
 via a terminal ([See getting started at
-CHPC](https://www.chpc.utah.edu/documentation/gettingstarted.php%20See%20getting%20started%20at%20CHPC).
+CHPC](https://www.chpc.utah.edu/documentation/gettingstarted.php).
 
 If you are part of the Yandell, Marth, or Quinlan labs, your $HOME
 directory in the CHPC general environment will be located on the UCGD
@@ -65,7 +65,7 @@ Changes are as follows:
 - There is a template MPI job in $SCRIPTS/template_slurm_batch.sh. It
   is pre-configured to use the ucgd-kp/ucgd-rw accounts. See
   [RunningJobs at
-  CHPC](/pages/createpage.action?spaceKey=CHPC&title=RunningJobs+at+CHPC&linkCreation=true&fromPageId=5963939)
+  CHPC](/docs/CHPC_Guide/Submitting_and_Running_Jobs)
   for more info.
 - There are a number of convenience scripts that will be loaded into your path
 
