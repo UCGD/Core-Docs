@@ -2,6 +2,15 @@
 
 This website is built using [Docusaurus 2](https://docusaurus.io/), a modern static website generator.
 
+### Preparation
+
+Install yarn.
+
+On Mac OS [install Homebrew](https://brew.sh) and then install yarn
+```
+$ brew install yarn
+```
+
 ### Installation
 
 ```
