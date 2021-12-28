@@ -26,12 +26,14 @@ const config = {
           // Please change this to your repo.
           editUrl: 'https://github.com/UCGD/Core-Docs/docs/',
         },
+/**
         blog: {
           showReadingTime: true,
           // Please change this to your repo.
           editUrl:
             'https://github.com/UCGD/Core-Docs/blog/',
         },
+*/
         theme: {
           customCss: require.resolve('./src/css/custom.css'),
         },
@@ -51,11 +53,14 @@ const config = {
         items: [
           {
             type: 'doc',
-            docId: 'intro',
+            docId: 'Documentation Homepage',
             position: 'left',
             label: 'Documentation',
           },
-          {to: '/blog', label: 'Blog', position: 'left'},
+/** 
+ * HERE TO ADD BACK THE BLOG
+ * {to: '/blog', label: 'Blog', position: 'left'},
+ */
           {
             href: 'https://github.com/UCGD/Core-Docs',
             label: 'GitHub',
@@ -67,29 +72,29 @@ const config = {
         style: 'dark',
         links: [
           {
-            title: 'Docs',
+            title: 'UCGD Docs',
             items: [
               {
                 label: 'Documentation',
-                to: '/docs/intro',
+                to: '/docs/Documentation Homepage',
               },
             ],
           },
           {
-            title: 'Community',
+            title: 'UCGD Links', 
             items: [
-              {
-                label: 'Stack Overflow',
-                href: 'https://stackoverflow.com/questions/tagged/docusaurus',
-              },
-              {
-                label: 'Discord',
+			  {
+                label: 'UCGD Homepage',
                 href: 'https://discordapp.com/invite/docusaurus',
               },
               {
-                label: 'Twitter',
-                href: 'https://twitter.com/docusaurus',
+                label: 'UCGD Github page',
+                href: 'https://github.com/UCGD',
               },
+              {
+		 		label: 'UCGD Core Homepage',
+				href: 'https://cores.utah.edu/ucgd/',
+			  },
             ],
           },
           {
@@ -106,7 +111,7 @@ const config = {
             ],
           },
         ],
-        copyright: `Copyright © ${new Date().getFullYear()} My Project, Inc. Built with Docusaurus.`,
+        // * copyright: `Copyright © ${new Date().getFullYear()} My Project, Inc. Built with Docusaurus.`, */
       },
       prism: {
         theme: lightCodeTheme,
