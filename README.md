@@ -20,6 +20,8 @@ $ yarn
 ### Local Development
 
 ```
+$ git clone git@github.com:UCGD/Core-Docs.git 
+$ cd Core-Docs
 $ yarn start
 ```
 
