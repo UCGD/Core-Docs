@@ -27,12 +27,14 @@ const config = {
           editUrl: 'https://github.com/UCGD/Core-Docs/docs/',
         },
 /**
+ *
         blog: {
           showReadingTime: true,
           // Please change this to your repo.
           editUrl:
             'https://github.com/UCGD/Core-Docs/blog/',
         },
+
 */
         theme: {
           customCss: require.resolve('./src/css/custom.css'),
