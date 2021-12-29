@@ -14,6 +14,8 @@ $ brew install yarn
 ### Installation
 
 ```
+$ git clone git@github.com:UCGD/Core-Docs.git 
+$ cd Core-Docs
 $ yarn
 ```
 
