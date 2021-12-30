@@ -1,6 +1,6 @@
 # Core-Docs
 
-View the current io page [here](https://ucgd.github.io/Core-Docs/docs/Documentation%20Homepage)
+View the current io page [here](https://ucgd.github.io/Core-Docs/docs/Homepage)
 
 This website is built using [Docusaurus 2](https://docusaurus.io/), a modern static website generator.
 
