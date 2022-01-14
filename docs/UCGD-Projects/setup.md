@@ -1,4 +1,4 @@
-# UCGD Project Setup
+# Setup
 
 We have updated the UCGD project request system to allow users to generate projects as needed without first interacting with UCGD.  Multiple project types can be requested, all of which will be covered below.
 
