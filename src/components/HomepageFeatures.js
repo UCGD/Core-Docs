@@ -4,32 +4,30 @@ import styles from './HomepageFeatures.module.css';
 
 const FeatureList = [
   {
-    title: 'Easy to Use',
-    Svg: require('../../static/img/undraw_docusaurus_mountain.svg').default,
+    /// Images found on https://undraw.co
+    title: 'Review our Documentation.',
+    Svg: require('../../static/img/docs.svg').default,
     description: (
       <>
-        Docusaurus was designed from the ground up to be easily installed and
-        used to get your website up and running quickly.
+        Review our <a href="https://ucgd.github.io/Core-Docs/docs/Homepage" target="_blank">documentation</a> covering a variety of topics including CHPC access, Project setup and Pipeline processing.
       </>
     ),
   },
   {
-    title: 'Focus on What Matters',
-    Svg: require('../../static/img/undraw_docusaurus_tree.svg').default,
+    title: 'Return to the UCGD Homepage.',
+    Svg: require('../../static/img/homepage.svg').default,
     description: (
       <>
-        Docusaurus lets you focus on your docs, and we&apos;ll do the chores. Go
-        ahead and move your docs into the <code>docs</code> directory.
+        Visit the UCGD <a href="https://ucgd.genetics.utah.edu/" target="_blank">Homepage</a> 
       </>
     ),
   },
   {
-    title: 'Powered by React',
-    Svg: require('../../static/img/undraw_docusaurus_react.svg').default,
+    title: 'Request a UCGD Project',
+    Svg: require('../../static/img/project_request.svg').default,
     description: (
       <>
-        Extend or customize your website layout by reusing React. Docusaurus can
-        be extended while reusing the same header and footer.
+        Here you can fill out a <a href="https://redcap.link/ucgd" target="_blank">UCGD Project</a> request form.
       </>
     ),
   },

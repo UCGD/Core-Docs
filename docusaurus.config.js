@@ -7,12 +7,12 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   title: 'UCGD Core',
-  tagline: 'Utah Center for Genetic Discovery Core Facility',
+  tagline: 'Utah Center for Genetic Discovery Core Documentation.',
   url: 'https://ucgd.github.io',
   baseUrl: '/Core-Docs/',
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
-  favicon: 'img/favicon.ico',
+  favicon: 'img/ucgd.png',
   organizationName: 'UCGD', // Usually your GitHub org/user name.
   projectName: 'Core-Docs', // Usually your repo name.
 
@@ -26,16 +26,6 @@ const config = {
           // Please change this to your repo.
           editUrl: 'https://github.com/UCGD/Core-Docs/docs/',
         },
-/**
- *
-        blog: {
-          showReadingTime: true,
-          // Please change this to your repo.
-          editUrl:
-            'https://github.com/UCGD/Core-Docs/blog/',
-        },
-
-*/
         theme: {
           customCss: require.resolve('./src/css/custom.css'),
         },
@@ -85,16 +75,12 @@ const config = {
           {
             title: 'UCGD Links', 
             items: [
-			  {
-                label: 'UCGD Homepage',
-                href: 'https://discordapp.com/invite/docusaurus',
-              },
               {
                 label: 'UCGD Github page',
                 href: 'https://github.com/UCGD',
               },
               {
-		 		label: 'UCGD Core Homepage',
+		 		label: 'UCGD Cores Page',
 				href: 'https://cores.utah.edu/ucgd/',
 			  },
             ],
@@ -103,11 +89,7 @@ const config = {
             title: 'More',
             items: [
               {
-                label: 'Blog',
-                to: '/blog',
-              },
-              {
-                label: 'GitHub',
+                label: 'Documentation GitHub Page',
                 href: 'https://github.com/UCGD/Core-Docs',
               },
             ],
