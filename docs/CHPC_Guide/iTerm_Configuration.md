@@ -1,15 +1,12 @@
----
-id: iTerm_Configuration
-toplevel: true
-title: iTerm Configuration
----
+
+# iTerm Configuration
 
 iTerm is a replacement for the OSX Terminal. It works on Macs with macOS
 10.10 or newer. It includes many features the increase productivity.
 
 ## Initial Setup
 
-Download and install iTerm → <https://iterm2.com/index.html>
+[Download](https://iterm2.com/index.html) and install iTerm
 
 ## Key Remapping
 
@@ -84,8 +81,6 @@ fi
 
 :::
 
-
-
 ## Profile Switching
 
 If you commonly switch between logins (root, ucgd-peuser, etc.), you can
@@ -123,8 +118,6 @@ To setup:
 Once setup, you should switch to the user identified by the regular
 expression in step 10, and the terminal layout should automatically
 change.
-
-
 
 Before Profile Switch
 ![](/attachments/5963958/5964061.png)

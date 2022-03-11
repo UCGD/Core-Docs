@@ -46,6 +46,5 @@ transferring between PE and general environments).
 
 
 
-[See ][CHPC Data Transfer
-Services](https://www.chpc.utah.edu/documentation/data_services.php)[
-for more info on transfer nodes.]
+See [CHPC Data Transfer Services](https://www.chpc.utah.edu/documentation/data_services.php)
+for more info on transfer nodes.

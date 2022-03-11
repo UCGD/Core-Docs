@@ -27,11 +27,7 @@ the [Globus Quick Start
 Guide](https://docs.globus.org/cli/quickstart/) for more
 info on using Globus CLI. Also to transfer files from your local
 machines, you will also need to install [Globus Connect
-Personal](https://www.globus.org/globus-connect-personal). 
-
-Example transfer command lines:
-
-#\.... 
+Personal](https://www.globus.org/globus-connect-personal).  
 
 # Web interface
 

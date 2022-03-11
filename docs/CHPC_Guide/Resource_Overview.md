@@ -49,34 +49,19 @@ title: Resource Overview
 # Node Access
 
 -   Login to nodes (Note: require [multi-factor
-    authentication](https://www.chpc.utah.edu/documentation/software/duo.php)
-    ):
-
-    :::
-    :::
+    authentication](https://www.chpc.utah.edu/documentation/software/duo.php))
+  
     ```
     ssh <UID>@redwood4.chpc.utah.edu #interactive/login node 1
     ssh <UID>@kingspeak19.chpc.utah.edu #interactive/login node 2
     ```
-    :::
-    :::
 
 -   Interactive access to job submission nodes (from login node):
 
-    :::
-    :::
     ```
     srun --pty -A ucgd-rw -p ucgd-rw -t 01:00:00 -N 1 /bin/bash #standard SLURM command
     idev -A ucgd-rw #alternate convenience command
     ```
-    :::
-    :::
-
-
-
-
-
-
 
 # Storage Specifications
 
@@ -104,11 +89,7 @@ title: Resource Overview
 ### Isilon (general environment)
 
 -   390 TB (usable)
-
-```
-<!-- -->
-```
--   \$HOME directories (Yandell, Marth, and Quinlan lab members)
+-   $HOME directories (Yandell, Marth, and Quinlan lab members)
     -   Snapshots enabled (once per hour for 24 hours and once per day
         for a week)
     -   Smart quota\'s enabed\
