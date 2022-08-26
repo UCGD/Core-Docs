@@ -75,14 +75,18 @@ const config = {
           {
             title: 'UCGD Links', 
             items: [
-              {
-                label: 'UCGD Github page',
-                href: 'https://github.com/UCGD',
-              },
-              {
-		 		label: 'UCGD Cores Page',
-				href: 'https://cores.utah.edu/ucgd/',
-			  },
+				{
+					label:'UCGD Homepage',
+					href: 'https://ucgd.genetics.utah.edu/',
+				},
+				{
+					label: 'UCGD Github page',
+					href: 'https://github.com/UCGD',
+				},
+				{
+					label: 'UCGD Cores Page',
+					href: 'https://cores.utah.edu/ucgd/',
+				},
             ],
           },
           {

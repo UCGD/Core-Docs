@@ -14,20 +14,20 @@ const FeatureList = [
     ),
   },
   {
-    title: 'Return to the UCGD Homepage.',
-    Svg: require('../../static/img/homepage.svg').default,
-    description: (
-      <>
-        Visit the UCGD <a href="https://ucgd.genetics.utah.edu/" target="_blank">Homepage</a> 
-      </>
-    ),
-  },
-  {
     title: 'Request a UCGD Project',
     Svg: require('../../static/img/project_request.svg').default,
     description: (
       <>
         Here you can fill out a <a href="https://redcap.link/ucgd" target="_blank">UCGD Project</a> request form.
+      </>
+    ),
+  },
+  {
+    title: 'Create a UCGD User account.',
+    Svg: require('../../static/img/user_request.svg').default,
+    description: (
+      <>
+        Here you can fill out a <a href="https://redcap.link/ucgd_users" target="_blank">UCGD User Account</a> request form.
       </>
     ),
   },
