@@ -26,7 +26,9 @@ Description of the available project scope types.
 | STG | Data storage only | Store genomic data, no processing by UCGD to occur. |
 | SEQ | Sequencing only | Facilitate sequence transfer to Utah resources or act as middleman. |
 | MOS | Mosaic project only | Only generate a Mosaic project. Future processing from this project will not occur without a new project being generated. |
-| NEO | NeoSeq project only | This selection is only for current members of the NeoSeq collaboration. |
+| NEO | NeoSeq project | This selection is only for current members of the NeoSeq collaboration. |
+| DGN | Diagnostic project | Use to process diagnostic process or reprocessing. |
+| RNA | RNA-Seq project | Request RNA-Seq processing. |
 
 ## Project Request Fields
 
@@ -36,9 +38,19 @@ Below is a description of each of the current UCGD project fields, please refer 
 | --------------|-------------|-----------|
 | Today's Date  | This will auto populate for record keeping and update requests. | Default |
 | Scope of work | Currently we have six different scopes available. Described above. |Yes|
+| Mosaic project already exist | If you have created a prior project in Mosaic change selection here. | Default |
+| Existing Mosaic Project Name | Name used for your current Mosaic project. | Yes |
+| Mosaic Project ID | Mosaic Project ID (found in URL) | Yes |
 | UCGD Analyst  | The UCGD Core analyst assisting you or conducting your analysis. Select Unknown to auto assign an analyst to your project. | Yes |
+| NeoSeq Lead Analyst | When NEO scope_of_work is selected the associate analyst individual. | Yes |
 | Project descriptive term | Two word limit describing your project (only letters allowed). | Yes |
+| Family type | Project relationship type. | Yes |
+| Kindred ID | Known Kindred id of Neoseq case. | Yes |
+| Phenotype description | Full text description of known pheotype. | Yes |
 | Full Project description | Free form text description of your project. | No |
+| Will this project include data analysis | If there is analysis to be performed by a UCGD core analyst, specify here. | Yes |
+| Genomic Backgrounds | Which UCGD background set to use based on access. | Yes |
+| Phenotype | Comma separated list of Phenotypic terms. Ontology based terms preferred. | Yes |
 | PI First Name | First name of the project PI | Yes |
 | PI Last Name | Last name of the project PI | Yes |
 | PI uNID | University uNID of the project PI, or 'external' if not a member of the University of Utah. | Yes |
@@ -46,19 +58,16 @@ Below is a description of each of the current UCGD project fields, please refer 
 | PI Phone Number | Phone number of the project PI | No |
 | IRB Number | IRB governing project funding and controlled access. Enter 'exempt' if the project is not governed by an IRB. | Yes |
 | IRB Institution | Institution governing the IRB | No |
-| Reference | Which human genome based reference | Yes |
-| Project Notes | Free text for users to add any additional project notes as needed. | No |
-| Will this project include data analysis? | If there is analysis to be performed by a UCGD core analyst, specify here. | Yes |
-| Genomic Backgrounds | Which UCGD background set to use based on access. | Yes |
-| Phenotype | Comma separated list of Phenotypic terms. Ontology based terms preferred. | Yes |
 | Variant Calling Framework | Currently only 'Sentieon' is available, but more will be added in time. | Yes |
 | Sequence design | Data type used in project processing. | Yes |
 | Sequence library preparation (PCR-free / PCR-based) | Sequence library preparation | Yes |
 | Sequence source | Where sample[s] sequencing was conducted | No |
 | Tissue source: were any of your samples derived from saliva? | Allows pipeline adjustment if the sequence was from a saliva based source. | Yes |
+| Reference | Which human genome based reference | Yes |
+| Project Notes | Free text for users to add any additional project notes as needed. | No |
 | Have you filled out a work authorization form? | Authorization form are required for Core services. | Yes |
 | Which account/s to bill? | List of one or more accounts to bill services rendered. | Yes |
-| Submitter is PI of project? | If the project is not being requested by the PI, additional information on who is requesting the project. | Yes |
+| Submitter is PI of project | If the project is not being requested by the PI, additional information on who is requesting the project. | Yes |
 | Submitter First Name | The first name of the submitter. | Yes |
 | Submitter Last Name | The last name of the submitter. | Yes |
 | Submitter uNID | The U of U UNID of the submitter. | Yes |
