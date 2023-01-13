@@ -15,6 +15,10 @@ The UCGD-Pipeline is our fully automated processing pipeline which at a high-lev
 * Uses REDCap to manage and accept project requests.
 
 
+## Pipeline Overview
+
+![Overview](/img/ucgdpipeline_overview.png)
+
 ## Adding software
 
 ### Docker: 

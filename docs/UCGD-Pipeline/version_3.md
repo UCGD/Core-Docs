@@ -146,7 +146,10 @@ The final data locations will remain the same (including read-only permission).
 | `ucgd_post_params.yaml` | Parameter file used to define and initiate launching of post processing steps.|
 | `ucgd_versions.yml` | Created by the pipeline post processing.  Will contain all software versions for posterity. |
 
+### Processing Overview
+
+![Pipeline Overview](/img/processing_overview.png)
+
 ### Pipeline DAG visualisation
 
 ![DAG](/img/version_2_dag.png)
-

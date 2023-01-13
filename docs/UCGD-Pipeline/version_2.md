@@ -12,4 +12,4 @@ As of version 2.13.77+ all projects are expected to be setup using the [UCGD RED
 
 All project processing will run on an automatic hourly cron check, but the following gives a detailed description of actions the `UCGD-Pipeline` performs.
 
-*Currently still available as a separate branch of the UCGDPipeline github repository []. As of Jan, 2023, Version 2 is the only method available to process GRCh37 projects.*
+*Currently still available as a separate [branch](https://github.com/UCGD/UCGD-Pipeline/tree/version2) of the UCGDPipeline github repository. As of Jan, 2023, Version 2 is the only method available to process GRCh37 projects.*
