@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkcore=self.webpackChunkcore||[]).push([[7280],{9943:function(e){e.exports=JSON.parse('{"label":"hello","permalink":"/Core-Docs/blog/tags/hello","allTagsPath":"/Core-Docs/blog/tags","count":2}')}}]);
