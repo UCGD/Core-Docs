@@ -26,7 +26,6 @@ Description of the available project scope types.
 | STG | Data storage only | Store genomic data, no processing by UCGD to occur. |
 | SEQ | Sequencing only | Facilitate sequence transfer to Utah resources or act as middleman. |
 | MOS | Mosaic project only | Only generate a Mosaic project. Future processing from this project will not occur without a new project being generated. |
-| NEO | NeoSeq project | This selection is only for current members of the NeoSeq collaboration. |
 | DGN | Diagnostic project | Use to process diagnostic process or reprocessing. |
 | RNA | RNA-Seq project | Request RNA-Seq processing. |
 
@@ -42,14 +41,12 @@ Below is a description of each of the current UCGD project fields, please refer 
 | Existing Mosaic Project Name | Name used for your current Mosaic project. | Yes |
 | Mosaic Project ID | Mosaic Project ID (found in URL) | Yes |
 | UCGD Analyst  | The UCGD Core analyst assisting you or conducting your analysis. Select Unknown to auto assign an analyst to your project. | Yes |
-| NeoSeq Lead Analyst | When NEO scope_of_work is selected the associate analyst individual. | Yes |
 | Project descriptive term | Two word limit describing your project (only letters allowed). | Yes |
 | Family type | Project relationship type. | Yes |
 | Kindred ID | Known Kindred id of Neoseq case. | Yes |
 | Phenotype description | Full text description of known pheotype. | Yes |
 | Full Project description | Free form text description of your project. | No |
 | Will this project include data analysis | If there is analysis to be performed by a UCGD core analyst, specify here. | Yes |
-| Genomic Backgrounds | Which UCGD background set to use based on access. | Yes |
 | Phenotype | Comma separated list of Phenotypic terms. Ontology based terms preferred. | Yes |
 | PI First Name | First name of the project PI | Yes |
 | PI Last Name | Last name of the project PI | Yes |
@@ -58,7 +55,7 @@ Below is a description of each of the current UCGD project fields, please refer 
 | PI Phone Number | Phone number of the project PI | No |
 | IRB Number | IRB governing project funding and controlled access. Enter 'exempt' if the project is not governed by an IRB. | Yes |
 | IRB Institution | Institution governing the IRB | No |
-| Variant Calling Framework | Currently only 'Sentieon' is available, but more will be added in time. | Yes |
+| Variant Calling Framework | Currently DeepVariant or DeepVariant (GATK). GATK version runs DeepVariant with GATK based parameters. | Yes |
 | Sequence design | Data type used in project processing. | Yes |
 | Sequence library preparation (PCR-free / PCR-based) | Sequence library preparation | Yes |
 | Sequence source | Where sample[s] sequencing was conducted | No |
