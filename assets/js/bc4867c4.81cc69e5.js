@@ -1,1 +1,0 @@
-"use strict";(self.webpackChunkcore=self.webpackChunkcore||[]).push([[5857],{6133:function(e){e.exports=JSON.parse('{"permalink":"/Core-Docs/blog/tags/hola","page":1,"postsPerPage":10,"totalPages":1,"totalCount":1,"blogDescription":"Blog","blogTitle":"Blog"}')}}]);
