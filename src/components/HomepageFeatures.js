@@ -18,7 +18,7 @@ const FeatureList = [
     Svg: require('../../static/img/project_request.svg').default,
     description: (
       <>
-        Here you can fill out a <a href="https://redcap.link/ucgd" target="_blank">UCGD Project</a> request form.
+        Here you can fill out a <a href="https://mosaic.chpc.utah.edu/#/projects/new" target="_blank">UCGD Project</a> request form.
       </>
     ),
   },

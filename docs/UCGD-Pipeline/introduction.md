@@ -2,24 +2,22 @@
 
 The UCGD-Pipeline is our fully automated processing pipeline which at a high-level does the following:
 
-* Uses Sentieon based software following GATK best practice approach.
+* Uses DeepVariant based software following GATK best practice approach.
 * Accepts input files of BAM/CRAM/Fastq or a combination of each.
 * Utilizes multiple modern QC tools.
 * Can use any number of background files for joint-genotyping.
-* Processes using Nextflow, a DSL workflows language.
+* Processes using Nextflow.
 * Uses container (Docker & Singularity) based software for HPC UCGD PE Processing.
 * Uses and requires granted access via the U of U IRB system.
-* Uses Mosaic for project LIMS management.
-* Is automated using database status to determine when/how processing should be done.
-* All data is managed and stored within the CHPC Protected Environment.
-* Uses REDCap to manage and accept project requests.
+* Is automated using Mosaic for project LIMS management to determine when/how processing should be done.
+* Manages and stored all project data within the CHPC Protected Environment.
 
 
 ## Pipeline Overview
 
-![Overview](/img/ucgdpipeline_overview.png)
+![Overview](/img/pipeline4-overview.jpg)
 
-## Adding software
+## Adding New Software
 
 ### Docker: 
 
@@ -27,7 +25,7 @@ UCGD exclusively uses [docker](https://www.docker.com/) to manage all software f
 
 In order to add specific tools to the UCGD-Pipeline, we require a
 publicly accessible docker image (Nextflow cannot access private docker
-repositories at this time).
+repositories at this time), that launches into a bash environment (see below).
 
 ### Steps to add software or desired processes:
 
