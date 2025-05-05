@@ -122,7 +122,7 @@ Create a location for the needed master config file:
 
 ```bash
 mkdir -p /home/ec2-user/.config/master
-touch /home/ec2-user/.config/master/master.conf
+touch /home/ec2-user/.config/master/master.config
 ```
 **You will need to update this `master.config` file with your Mosaic login credentials.**
 
