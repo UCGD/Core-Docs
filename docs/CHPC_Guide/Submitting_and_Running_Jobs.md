@@ -8,7 +8,7 @@ Please see [CHPC's documentation on how to build and submit a batch script in SL
 
 ## CHPC Clusters
 
-Jobs at CHPC must be submitted using an account and a partition. There are several clusters at CHPC each with specific accounts and associated partitions available (some are only available to specific labs).
+Jobs at CHPC must be submitted using an account and a partition. There are several clusters at CHPC, each with specific accounts and associated partitions available (some are only available to specific labs).
 
 ### Redwood Cluster
 | Accounts | Associated Partitions |
@@ -30,7 +30,7 @@ Jobs at CHPC must be submitted using an account and a partition. There are sever
 | owner-guest	| notchpeak-guest|
   
 ### Kingspeak Cluster
-|Accounts | Associated  Partitions |
+|Accounts | Associated Partitions |
 | ---------| ----------------------|
 |yandell	| kingspeak, kingspeak-freecycle|
 |marth	| kingspeak, kingspeak-freecycle|
@@ -43,9 +43,9 @@ Jobs at CHPC must be submitted using an account and a partition. There are sever
 | smithp-guest | 	ash-guest |
 
 
-Partitions named for the cluster (i.e. redwood, notchpeak, and kingspeak) are only available if you were given a CPU-hour allocation after submitting a project proposal to CHPC. These jobs run on nodes owned directly by CHPC. The similarly named `freecycle` partitions, however, are available to anyone, but `freecycle` jobs will only run on idle nodes and will be preempted if resources are requested by any other users with available CPU-hour allocation. The `guest` partitions run on idle machines owned by other labs (not CHPC owned machines). They are also preemptable, but tend to be more idle than the `freecycle` partition.
+Partitions named for the cluster (i.e., redwood, notchpeak, and kingspeak) are only available if you were given a CPU-hour allocation after submitting a project proposal to CHPC. These jobs run on nodes owned directly by CHPC. The similarly named `freecycle` partitions, however, are available to anyone, but `freecycle` jobs will only run on idle nodes and will be preempted if resources are requested by any other users with available CPU-hour allocation. The `guest` partitions run on idle machines owned by other labs (not CHPC owned machines). They are also preemptible, but tend to be more idle than the `freecycle` partition.
 
-Please only use the `ucgd-rw` account for UCGD related jobs. If you want to submit non-UCGD jobs, please use [owner-guest](https://www.chpc.utah.edu/documentation/policies/2.1GeneralHPCClusterPolicies.php#Pol2.1.4) account to make your jobs preemtable. You can also use SLURM's feature specifier tag (-C option) and exclude tag (-x option) to request or exclude certain sets of nodes in a job request. You can also use the string "c20", "c24", or "c32" together with the specifier tag (-C option) to request only nodes with 20, 24, or 32 CPUs respectively (use `sinfo -o %f` command to see all available features that can be specified).
+Please only use the `ucgd-rw` account for UCGD-related jobs. If you want to submit non-UCGD jobs, please use the [owner-guest](https://www.chpc.utah.edu/documentation/policies/2.1GeneralHPCClusterPolicies.php#Pol2.1.4) account to make your jobs preemptible. You can also use SLURM's feature specifier tag (-C option) and exclude tag (-x option) to request or exclude certain sets of nodes in a job request. You can also use the string "c20", "c24", or "c32" together with the specifier tag (-C option) to request only nodes with 20, 24, or 32 CPUs, respectively (use `sinfo -o %f` command to see all available features that can be specified).
 
 ### Example:
 ```
@@ -56,12 +56,12 @@ Please only use the `ucgd-rw` account for UCGD related jobs. If you want to subm
 #SBATCH -p redwood-guest   #partition
 #SBATCH -J test_job        #job name
 #SBATCH -C hci,c32         #feature specifier
-#sbatch -x rw[040-071]     #node exclusion
+#SBATCH -x rw[040-071]     #node exclusion
 ```
 
 ## Interactive Jobs
 
-Jobs submitted via sbatch will be non-interactive, i.e. you won't have an attached terminal. To get an interactive session you can use the `srun` command, but it requires quite a few options, so we created the `idev` command to make it easier to generate interactive development jobs (note that XSEDE resources also have an idev command which ours is based off of)
+Jobs submitted via sbatch will be non-interactive, i.e., you won't have an attached terminal. To get an interactive session, you can use the `srun` command, but it requires quite a few options, so we created the `idev` command to make it easier to generate interactive development jobs (note that XSEDE resources also have an idev command, on which ours is based).
 
 ```
 Usage:

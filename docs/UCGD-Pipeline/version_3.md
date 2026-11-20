@@ -3,7 +3,7 @@
 [Technical Document](https://docs.google.com/document/d/1vuGm7ywKmLhwoOGC1-ovweX0BqTvJ_dbCI-ulwFKSl0/edit?usp=sharing)
 
 ### Scope of Work
-Central to processing is the UCGD concept of `scope_of_work` which is defined into the following subtypes and used as Nextflow `-entry` options
+Central to processing is the UCGD concept of `scope_of_work` which is divided into the following subtypes and used as Nextflow `-entry` options:
 
 
 | Nextflow entry options |
@@ -16,7 +16,7 @@ Central to processing is the UCGD concept of `scope_of_work` which is defined in
 | MOSAIC |
 | POST_PROCESS |
 
-`VAR` & `DGN` will run all steps of the pipeline, including  `SV`, `JGT`, `MOSAIC` and `POST_PROCESS` steps, however `SV`, `JGT`, `MOSAIC` and `POST_PROCESS` can be run independently if required input files are present.
+`VAR` & `DGN` will run all steps of the pipeline, including `SV`, `JGT`, `MOSAIC` and `POST_PROCESS` steps; however, `SV`, `JGT`, `MOSAIC` and `POST_PROCESS` can be run independently if required input files are present.
 
 ### Directory outlines
 
@@ -166,15 +166,15 @@ The final data locations will remain the same (including read-only permission).
 | Nextflow file | Description |
 |---------------|-------------|
 | `ucgd_main.nf`  | The main entry point script contains all `-entry` options. |
-| `ucgd.master.config ` | Contains all templated paths and definitions. |
-| `ucgd_post_params.yaml` | Parameter file used to define and initiate launching of post processing steps.|
-| `ucgd_versions.yml` | Created by the pipeline post processing.  Will contain all software versions for posterity. |
+| `ucgd.master.config` | Contains all templated paths and definitions. |
+| `ucgd_post_params.yaml` | Parameter file used to define and initiate launching of post-processing steps. |
+| `ucgd_versions.yml` | Created during pipeline post-processing. Contains all software versions for posterity. |
 
 ### Processing Overview
 
 ![Pipeline Overview](/img/processing_overview.png)
 
-### Pipeline DAG visualisation
+### Pipeline DAG visualization
 
 ![DAG](/img/version_2_dag.png)
 
@@ -183,11 +183,11 @@ The final data locations will remain the same (including read-only permission).
 
 ##### `Version 3.24.115` Update:
 
-Pipeline has been updated to process using [DeepVariant](https://github.com/google/deepvariant) and [GLnexus](https://github.com/dnanexus-rnd/GLnexus). Sentieon and NeoSeq processing has been removed and archived.  All NeoSeq modules remain archived.  Neoseq nextflow profile had been moved to `priority` for future use.
+Pipeline has been updated to process using [DeepVariant](https://github.com/google/deepvariant) and [GLnexus](https://github.com/dnanexus-rnd/GLnexus). Sentieon and NeoSeq processing has been removed and archived. All NeoSeq modules remain archived. The NeoSeq Nextflow profile has been moved to `priority` for future use.
 
 #### Major changes from Version 2:
 
 * Migration to Nextflow's [DSL2](https://www.nextflow.io/docs/latest/dsl2.html) framework, which allows an improved ability to modularize and compartmentalize Nextflow processes and code.
-* Nextflow process to occur and remain within the `[IRB]/[PROJECT]/Scratch` location.
+* Nextflow processing occurs and remains within the `[IRB]/[PROJECT]/Scratch` location.
 * Reference GRCh38 is the default and only reference used.
 * Processing based on UCGD `scope_of_work`.

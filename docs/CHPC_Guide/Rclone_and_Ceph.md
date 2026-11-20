@@ -5,7 +5,7 @@ title: Rclone and Ceph
 ---
 
 UCGD data is archived on Ceph object storage inside the protected
-environment. Data access in Ceph is compatible with S3 API\'s. A
+environment. Data access in Ceph is compatible with S3 APIs. A
 convenient way to access Ceph archived data at CHPC is to use Rclone, a
 parallelized tool similar to rsync that also supports S3 type storage.
 
@@ -45,13 +45,13 @@ storage_class =
 
 
 
-[Only the PolishedBams directory is archived for each UCGD recharge
+Only the PolishedBams directory is archived for each UCGD recharge
 center project and can be found in the bucket named \'Repository\'. Data
 structure under the bucket will be identical to the lustre Repository
 space. Each project will also have a file named .rclone.contents that
 contains metadata attributes (file permissions, timestamps, softlinks)
-that allow data to be restored to it\'s original state from the archive
-as needed.]
+that allow data to be restored to its original state from the archive
+as needed.
 
 
 

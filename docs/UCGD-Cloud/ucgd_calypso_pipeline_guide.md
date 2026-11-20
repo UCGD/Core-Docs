@@ -1,6 +1,6 @@
 # Calypso Re-Annotation Pipeline Guide
 
-This guide provides step-by-step instructions for setting up and running the UCGD Calypso re-annotation pipeline, or to run Nextflow as needed independent of the created bash script. Each input parameter for Nextflow execution is explained in detail.
+This guide provides step-by-step instructions for setting up and running the UCGD Calypso re-annotation pipeline, or for running Nextflow directly without the provided bash script. Each input parameter for Nextflow execution is explained in detail.
 
 ---
 
@@ -15,7 +15,7 @@ This guide provides step-by-step instructions for setting up and running the UCG
 
 ## Step-by-Step Instructions
 
-If you not decide to use the given `calypso.sh` script here are explanations of each prompt:
+If you decide not to use the given `calypso.sh` script, here are explanations of each prompt:
 
 ### 1. Start the Script
 
@@ -66,7 +66,7 @@ You will be prompted to enter the following inputs interactively:
 
 1. **Work Directory**
    - Path: `/common/nextflow/$MOSAIC_PROJECT_ID`
-   - Created and permissioned the needed EFS directory for Nextflow execution.
+   - Creates the EFS directory needed for Nextflow execution and sets its permissions.
 
 2. **Processing Directory**
    - Named: `[M]$MOSAIC_PROJECT_ID`
@@ -113,6 +113,6 @@ If not confirmed:
 - **Permissions**: Ensure necessary AWS and EC2 permissions.
 - **Storage**: Validate available storage on EFS and S3.
 - **Reference Genome**: Consistency between input VCF and selected reference.
-- **EFS**: After process completion, you must remember to delete your `/common/nextflow/M[project]` directory, or you will incure `AWS EFS` charges.
+- **EFS**: After process completion, you must remember to delete your `/common/nextflow/M[project]` directory, or you will incur `AWS EFS` charges.
 
 ---

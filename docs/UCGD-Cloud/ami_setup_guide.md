@@ -2,8 +2,7 @@
 
 This guide walks you through setting up a fresh Amazon Machine Image (AMI) environment based on the provided setup script.
 
-**This AMI is designed to run on a preconfigured `AWS ParallelCluster CloudFormation` setup [here](https://docs.aws.amazon.com/parallelcluster/latest/ug/cloudformation-v3.html
-), is AWS's detailed guide for setup.**
+**This AMI is designed to run on a preconfigured `AWS ParallelCluster CloudFormation` setup. AWS's detailed setup guide is [here](https://docs.aws.amazon.com/parallelcluster/latest/ug/cloudformation-v3.html).**
 
 ---
 
@@ -19,7 +18,7 @@ This guide walks you through setting up a fresh Amazon Machine Image (AMI) envir
 
 ## Step-by-Step Setup Instructions
 
-These steps can be run by downloading or copying the `headnode-startup.sh` [script](https://github.com/UCGD/UCGD-Cloud/blob/master/cloud/headnode-setup.sh), or they can be done independently by following each step below.
+These steps can be run by downloading or copying the `headnode-setup.sh` [script](https://github.com/UCGD/UCGD-Cloud/blob/master/cloud/headnode-setup.sh), or they can be done independently by following each step below.
 
 
 ### 1. Environment Variable Setup
@@ -36,7 +35,7 @@ echo "export USERS=/home" >> $HOME/.bashrc
 mkdir -p $HOME/code
 ```
 
-Reload your `.bashrc` or re-login for changes to take effect after install complete.
+Reload your `.bashrc` or log in again for changes to take effect after install complete.
 
 ### 2. Install Miniconda & AWS CLI
 
@@ -93,7 +92,7 @@ java -version
 
 ### 5. System Update and Install Software
 
-Detect OS and install necessary packages:
+Install the necessary packages:
 
 ```bash
 sudo yum install -y vim git docker
@@ -131,25 +130,26 @@ touch /home/ec2-user/.config/master/master.config
 Install Nextflow and its AWS plugin:
 
 ```bash
+export APPS=$HOME/code
 curl -s https://get.nextflow.io | bash
-sudo mv nextflow $APPS
-sudo chmod +x $APPS/nextflow
+mv nextflow $APPS/
+chmod +x $APPS/nextflow
 
-echo "export PATH=$APPS:\$PATH" >> $HOME/.bashrc
+echo 'export PATH=$HOME/code:$PATH' >> $HOME/.bashrc
 
 $APPS/nextflow plugin install nf-amazon
 ```
 
 ### 9. Clone UCGD Repositories
 
-Clone the required repositories with confirmation prompts:
+Clone the required repositories:
 
 ```bash
 # Clone UCGD-Cloud
-https://github.com/UCGD/UCGD-Cloud.git
+git clone https://github.com/UCGD/UCGD-Cloud.git $APPS/UCGD-Cloud
 
 # Clone ucgd_utils
-https://github.com/UCGD/ucgd_utils.git
+git clone https://github.com/UCGD/ucgd_utils.git $APPS/ucgd_utils
 ```
 
 Repos will be cloned to `$APPS` (`$HOME/code`).

@@ -9,16 +9,16 @@ so they appear as local directories on a local computer. Unfortunately CHPC does
 not have Samba available for the PE. But there is a workaround for Mac users to
 do this over SSH instead.
 
-# MAC OSX
+# macOS
 
-These instructions are for Mac OSX, but you can also do local mounts on
+These instructions are for macOS, but you can also do local mounts on
 Linux. Use [Libfuse](https://github.com/libfuse/libfuse)
 and [sshfs](https://github.com/libfuse/sshfs) for Linux
 instead of the links given below. How to install these tools is an
 exercise for the user. You can also still use the same ssh_mount script
 given below. Linux mounts will be under the /mnt directory.
 
-1. First install these two tools on your Mac (Fuse and SSHFS).
+1. First install these two tools on your Mac (macFUSE and SSHFS).
    - <https://github.com/osxfuse/osxfuse>
    - <https://github.com/osxfuse/sshfs>
 
@@ -39,13 +39,13 @@ given below. Linux mounts will be under the /mnt directory.
          sudo ssh_mount u0123456@kingspeak.chpc.utah.edu:/scratch/ucgd john:staff
 
     Description:
-         Script to mount CHPC directories over SSH on OSX and Linux using SSHF.
+         Script to mount CHPC directories over SSH on macOS and Linux using SSHFS.
          You will need to run as root or via sudo to create the mount. You must
          supply the server and path to mount along with ID mappings to collapse
          the user:group from the server side (i.e. provide the local user and
-         group on your Mac that you want thing to map to). The new mount will
+         group on your Mac that you want things to map to). The new mount will
          show up in the Finder window and under the /Volumes folder on your Mac.
-         On Linux the mount will appear under the /mnt folder. Soflinks on the
+         On Linux the mount will appear under the /mnt folder. Softlinks on the
          server will also be collapsed and will be displayed locally as real
          files rather than softlinks.
 
@@ -65,29 +65,23 @@ Linux mounting (tested on Ubuntu 18.04):
 
 # Windows 
 
-Direct mounts through Windows (i.e. mapping a network drive) won\'t work
-in the PE due to the need for Duo 2-factor authentication\
+Direct mounts through Windows (i.e., mapping a network drive) won\'t work
+in the PE due to the need for Duo two-factor authentication.
 See
 <https://www.chpc.utah.edu/documentation/data_services.php#Direct_mounts>
 \> Mounting with SSHFS \> sshfs on Windows
 
 The only 3rd party sshfs client that supports Duo 2FA is [SFTP Net
-Drive](https://www.nsoftware.com/sftp/drive/)
+Drive](https://www.nsoftware.com/sftp/drive/).
 
-Install
-Profile \> New Profile
+1. Install SFTP Net Drive, then choose **Profile \> New Profile**.
+2. Fill in the profile:
+   - Name: `Redwood`
+   - Server (host name): `redwood.chpc.utah.edu`
+   - Username: your uNID
+   - Authentication: Keyboard-interactive
+   - Choose a drive letter
+3. When connecting, enter your password at the first prompt, then enter `1` at the second prompt to send a Duo push.
+4. Under **Advanced \> Drive \> "Root folder on the Server"**, choose the path to mount, e.g., your home directory, the Redwood root, `/scratch/ucgd`, etc.
 
-Name: Redwood
-Server (Host name):
-[redwood.chpc.utah.edu](http://redwood.chpc.utah.edu)
-Username: \<uNID\>\
-Authentication: Keyboard-interactive\
-(Choose a Drive Letter)
-
-1st prompt: enter password\
-2nd prompt: enter 1 to push a request to Duo 2FA
-
-Advanced \> Drive \> \"Root folder on the Server\"
-Choose path to mount, e.g. your Home, Redwood root, /scratch/ucgd, etc.
-Create multiple profiles for different paths, e.g. Redwood_Home,
-Redwood_Datahub, etc.
+Create multiple profiles for different paths, e.g., `Redwood_Home`, `Redwood_Datahub`, etc.

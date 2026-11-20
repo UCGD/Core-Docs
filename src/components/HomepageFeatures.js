@@ -1,62 +1,57 @@
 import React from 'react';
-import clsx from 'clsx';
+import Link from '@docusaurus/Link';
+import Icon from './Icons';
 import styles from './HomepageFeatures.module.css';
 
-const FeatureList = [
+const SECTIONS = [
   {
-    /// Images found on https://undraw.co
-    title: 'Review our Documentation.',
-    Svg: require('../../static/img/docs.svg').default,
-    description: (
-      <>
-        Review our <a href="https://ucgd.github.io/Core-Docs/docs/Homepage" target="_blank">documentation</a> covering a variety of topics including CHPC access, Project setup and Pipeline processing.
-      </>
-    ),
+    icon: 'server', tone: 'blue', title: 'CHPC Guide', to: '/docs/CHPC_Guide/Getting_Started_at_CHPC',
+    text: 'Accounts, login environment, Slurm jobs, job limits, data transfer, Globus, Rclone and the Protected Environment.',
+    links: [['Getting started', '/docs/CHPC_Guide/Getting_Started_at_CHPC'], ['Running jobs', '/docs/CHPC_Guide/Submitting_and_Running_Jobs'], ['Transferring data', '/docs/CHPC_Guide/Transfering_Data']],
   },
   {
-    title: 'Request a UCGD Project',
-    Svg: require('../../static/img/project_request.svg').default,
-    description: (
-      <>
-        Here you can fill out a <a href="https://mosaic.chpc.utah.edu/#/projects/new" target="_blank">UCGD Project</a> request form.
-      </>
-    ),
+    icon: 'pipeline', tone: 'green', title: 'UCGD Pipeline', to: '/docs/UCGD-Pipeline/introduction',
+    text: 'How projects move from FASTQ to analysis-ready variants, version by version.',
+    links: [['Introduction', '/docs/UCGD-Pipeline/introduction'], ['Version 4', '/docs/UCGD-Pipeline/version_4']],
   },
   {
-    title: 'Create a UCGD User account.',
-    Svg: require('../../static/img/user_request.svg').default,
-    description: (
-      <>
-        Here you can fill out a <a href="https://redcap.link/ucgd_users" target="_blank">UCGD User Account</a> request form.
-      </>
-    ),
+    icon: 'cloud', tone: 'purple', title: 'UCGD Cloud', to: '/docs/UCGD-Cloud/version_1',
+    text: 'Running UCGD pipelines on AWS ParallelCluster with Nextflow, ECR and EFS.',
+    links: [['Cloud pipeline', '/docs/UCGD-Cloud/version_1'], ['AMI setup', '/docs/UCGD-Cloud/ami_setup_guide'], ['VAR pipeline', '/docs/UCGD-Cloud/ucgd_var_pipeline_guide']],
+  },
+  {
+    icon: 'folder', tone: 'red', title: 'UCGD Projects', to: '/docs/UCGD-Projects/setup',
+    text: 'Setting up a new project with the UCGD core.',
+    links: [['Project setup', '/docs/UCGD-Projects/setup']],
+  },
+  {
+    icon: 'dataset', tone: 'teal', title: 'Public Datasets', to: '/docs/Public-Datasets/NIST',
+    text: 'Reference truth sets and population data available to UCGD users.',
+    links: [['NIST / GIAB', '/docs/Public-Datasets/NIST'], ['1000 Genomes', '/docs/Public-Datasets/1000G']],
   },
 ];
 
-function Feature({Svg, title, description}) {
+function Section({icon, tone, title, to, text, links}) {
   return (
-    <div className={clsx('col col--4')}>
-      <div className="text--center">
-        <Svg className={styles.featureSvg} alt={title} />
-      </div>
-      <div className="text--center padding-horiz--md">
-        <h3>{title}</h3>
-        <p>{description}</p>
-      </div>
+    <div className={styles.card}>
+      <Link to={to} className={styles.cover} aria-label={title} />
+      <span className={styles.icon} data-tone={tone}><Icon name={icon} /></span>
+      <h3 className={styles.title}>{title}</h3>
+      <p className={styles.text}>{text}</p>
+      <ul className={styles.links}>
+        {links.map(([label, href]) => (
+          <li key={href}><Link to={href}>{label}</Link></li>
+        ))}
+      </ul>
+      <span className={styles.go}><Icon name="arrow" size={18} /></span>
     </div>
   );
 }
 
 export default function HomepageFeatures() {
   return (
-    <section className={styles.features}>
-      <div className="container">
-        <div className="row">
-          {FeatureList.map((props, idx) => (
-            <Feature key={idx} {...props} />
-          ))}
-        </div>
-      </div>
-    </section>
+    <div className={styles.grid}>
+      {SECTIONS.map((s) => <Section key={s.title} {...s} />)}
+    </div>
   );
 }

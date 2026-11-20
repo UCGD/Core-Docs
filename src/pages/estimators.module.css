@@ -1,0 +1,37 @@
+.head {
+  position: relative;
+  overflow: hidden;
+  padding: 80px 0 56px;
+  border-bottom: 1px solid var(--ucgd-line);
+  background:
+    radial-gradient(520px 260px at 90% 0%, color-mix(in srgb, var(--ucgd-blue) 14%, transparent), transparent 70%),
+    radial-gradient(420px 240px at 0% 100%, color-mix(in srgb, var(--ucgd-purple) 10%, transparent), transparent 70%),
+    var(--ucgd-bg-subtle);
+}
+.kicker {
+  font-family: var(--ifm-font-family-monospace);
+  font-size: .74rem; letter-spacing: .2em; text-transform: uppercase;
+  color: var(--ifm-color-primary);
+  margin: 0 0 12px;
+}
+.title { font-size: clamp(2.4rem, 4.6vw, 3.4rem); letter-spacing: -0.04em; line-height: 1.05; font-weight: 700; margin: 0 0 16px; }
+.lead { color: var(--ucgd-muted); font-size: 1.12rem; line-height: 1.65; max-width: 62ch; margin: 0; }
+
+.main { padding: 56px 0 96px; }
+
+.notes {
+  margin-top: 28px;
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0;
+  border: 1px solid var(--ucgd-line);
+  border-radius: 18px;
+  overflow: hidden;
+  background: var(--ucgd-surface);
+}
+.notes > div { padding: 24px 28px; }
+.notes > div + div { border-left: 1px solid var(--ucgd-line); }
+.notes h2 { font-size: 1.05rem; margin: 0 0 6px; letter-spacing: -0.01em; }
+.notes p { color: var(--ucgd-muted); font-size: .94rem; line-height: 1.6; margin: 0; }
+@media (max-width: 996px) {
+  .notes { grid-template-columns: minmax(0, 1fr); }
+  .notes > div + div { border-left: 0; border-top: 1px solid var(--ucgd-line); }
+}

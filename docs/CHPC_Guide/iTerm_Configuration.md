@@ -1,8 +1,8 @@
 
 # iTerm Configuration
 
-iTerm is a replacement for the OSX Terminal. It works on Macs with macOS
-10.10 or newer. It includes many features the increase productivity.
+iTerm is a replacement for the macOS Terminal. It works on Macs with macOS
+10.10 or newer. It includes many features that increase productivity.
 
 ## Initial Setup
 
@@ -50,12 +50,12 @@ To install:
 
 :::note
 
-For 'click to SCP', iterm uses the hostname supplied by the server and
+For 'click to SCP', iTerm uses the hostname supplied by the server and
 runs SCP in the background, but CHPC servers do not return the same
 hostname as you use for SCP (try 'hostname -f' on kingspeak for
 example and you will see it does not match the expected URL). To get
 'click to SCP' to work on CHPC servers, make the following edit
-to \~/.iterm2_shell_integration.bash in you CHPC home directory. Look
+to \~/.iterm2_shell_integration.bash in your CHPC home directory. Look
 for a block of code starting around line 480 (or search for the string
 '\# If hostname -f') and replace the block of code with the following:
 
@@ -116,7 +116,7 @@ To setup:
     '\[ucgd-peuser\@kingspeak36:\~\]\$').
 
 Once setup, you should switch to the user identified by the regular
-expression in step 10, and the terminal layout should automatically
+expression in step 11, and the terminal layout should automatically
 change.
 
 Before Profile Switch
@@ -149,15 +149,14 @@ To setup:
 10. Click the 'Advanced' button for the profile.
 11. At the top there will be a section labeled 'Triggers'. Click the
     'Edit' button under 'Triggers'.
-12. [Click the '+' button to add a new trigger, and fill out the
-    following 3
-    triggers.]
+12. Click the '+' button to add a new trigger, and fill out the
+    following 3 triggers.
 
 
 | Regular Expression                                              | Action                | Parameters                   | Instant  |
 | --------------------------------------------------------------- | --------------------- | ---------------------------- | -------- |
 | ^(P\|p)assword\\s\*:\\s\*\$                                     | Open Password Manager | <Select account\> | checked  |
-| ^\\\[sudo\\\]\\s(P\|p)assword\\sfor\\su0045039\\s\*\\:\\s\*\$   | Open Password Manager | <Select account\> | checked  |
+| ^\\\[sudo\\\]\\s(P\|p)assword\\sfor\\su0123456\\s\*\\:\\s\*\$   | Open Password Manager | <Select account\> | checked  |
 | ^Passcode\\sor\\soption\\s\\(1\\-1\\)\\:\\s\*\$                 | Send Text             | 1\\n                         | checked  |
 
 

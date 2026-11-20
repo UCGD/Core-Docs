@@ -6,7 +6,7 @@ title: Data Structure and Policies
 
 ## UCGD Directory Structure
 
-- $COMMON is a non-lustre directory for shared applications and data
+- $COMMON is a non-Lustre directory for shared applications and data
 
         /uufs/chpc.utah.edu/common/PE/proj_UCGD/
           or
@@ -18,10 +18,10 @@ title: Data Structure and Policies
         └──shell_scripts
 
     apps - Installed applications and modules.<br/>
-    modulefiles - Configuration files for application in apps (used by lmod).<br/>
-    data - Shared datasets used by apps (i.e. GATK Bundles)<br/>
-    lustre_ACLs - ACL scripts applied to lustre<br/>
-    shell_scripts - Template scripts for jobs, prelaunch/postlaunch scripts, and environmental scripts (bashrc, bash_profile, etc).
+    modulefiles - Configuration files for applications in apps (used by lmod).<br/>
+    data - Shared datasets used by apps (e.g., GATK bundles)<br/>
+    lustre_ACLs - ACL scripts applied to Lustre<br/>
+    shell_scripts - Template scripts for jobs, prelaunch/postlaunch scripts, and environment scripts (bashrc, bash_profile, etc.).
 
 
 - Recharge Center Lustre
@@ -42,7 +42,7 @@ title: Data Structure and Policies
     Purgatory - Holding place for data waiting to be deleted (see if anyone complains before emptying the trash)<br/>
     UCGD_Analysis - Project directories for UCGD analysts<br/>
     UCGD_Processing - Working directory for data download and pipeline processing<br/>
-    UCGD_Datahub - Final storage location of data. Served up by Gnomex.
+    UCGD_Datahub - Final storage location of data. Served by GNomEx.
 
 
 - UCGD legacy Lustre
@@ -78,14 +78,14 @@ Space is currently being used by the UCGD-SRC group as a temporary storage space
 Contact Carson Holt if you have questions about this space.
 
 
-## CEPH Storage
+## Ceph Storage
 
-The CEPH object storage is used to archive data in UCGD_Datahub under
-PolishedBams directories. AS long as result files are lossless, they
+The Ceph object storage is used to archive data in UCGD_Datahub under
+PolishedBams directories. As long as result files are lossless, they
 function as an archive of the original Primary_Data files. You can
-access CEPH archives using rclone.
+access Ceph archives using Rclone.
 
-See documentation on how to setup and use Rclone:
+See documentation on how to set up and use Rclone:
 [CHPC Documentation on Rclone](https://www.chpc.utah.edu/documentation/software/rclone.php)
 
 
@@ -99,10 +99,10 @@ See documentation on how to setup and use Rclone:
    it's a softlink.
 4. PolishedBams and not Primary_Data is what gets backed up
    (Primary_Data is considered a temporary directory).
-5. 3 months after Billing, Primary_Data and Project_Setup get deleted
+5. Three months after billing, Primary_Data and Project_Setup get deleted
    after meeting the following criteria.
-   1. All files in PolishedBams have been lossless validated
-   2. All PolishedBam files have been backed up to CEPH storage
+   1. All files in PolishedBams have been validated as lossless
+   2. All PolishedBam files have been backed up to Ceph storage
    3. Immutable bit is set on PolishedBams
 6. PolishedBams are always CRAM and not BAM.
-7. 3 years after billing project is retired and all data removed.
+7. Three years after billing, the project is retired and all data is removed.

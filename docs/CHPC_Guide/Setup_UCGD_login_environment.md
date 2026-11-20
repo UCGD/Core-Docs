@@ -5,8 +5,8 @@ title: Setup UCGD login environment
 ---
 
 To get started you must first have an account with CHPC and be logged in
-via a terminal ([See getting started at
-CHPC](https://www.chpc.utah.edu/documentation/gettingstarted.php).
+via a terminal (see [Getting Started at
+CHPC](https://www.chpc.utah.edu/documentation/gettingstarted.php)).
 
 If you are part of the Yandell, Marth, or Quinlan labs, your $HOME
 directory in the CHPC general environment will be located on the UCGD
@@ -15,17 +15,17 @@ owned Isilon storage space (2TB quota). In the protected environment
 quota.
 
 
-## Lab Specific Module Setup
+## Lab-Specific Module Setup
 
 CHPC uses a module system to control your environment and load/unload
-sets of programs. We have set up lab specific modules that will make it
+sets of programs. We have set up lab-specific modules that will make it
 easier to access lab programs and resources.
 
 To get going on CHPC, once you are logged into a terminal do the
 following:
 
 
-**Standard bash configuration in the general environment (i.e. kingspeak/notchpeak)**
+**Standard bash configuration in the general environment (e.g., kingspeak/notchpeak)**
 
 ```
 cp /scratch/ucgd/serial/common/shell_scripts/bashrc ~/.bashrc
@@ -35,7 +35,7 @@ source ~/.bashrc
 ```
 
 
-**Standard bash configuration in the protected environment (i.e.
+**Standard bash configuration in the protected environment (e.g.,
 redwood)**
 
 ```
@@ -57,17 +57,17 @@ There will be several changes made to your environment by the
 
 Changes are as follows:
 
-- A read only UCGD group shared perl5 library directory will be
+- A read-only, UCGD group-shared perl5 library directory will be
   present for perl modules, as well as a hidden read/write user
   specific \~/.perl5 directory where you will also be able to install
-  local modules locally via CPAN (See $PERL5LIB environmental
+  modules locally via CPAN (see the $PERL5LIB environment
   variable).
 - There is a template MPI job in $SCRIPTS/template_slurm_batch.sh. It
   is pre-configured to use the ucgd-kp/ucgd-rw accounts. See
   [RunningJobs at
   CHPC](/docs/CHPC_Guide/Submitting_and_Running_Jobs)
   for more info.
-- There are a number of convenience scripts that will be loaded into your path
+- There are a number of convenience scripts that will be loaded into your path:
 
 idev \--\> convenient launch of interactive shell jobs
 
@@ -86,14 +86,14 @@ script (in descending PATH order)
 - There will also be several convenience environmental variables set
   up in your shell
 
-$UUID = syntactic sugar for getting your university ID (i.e u0123456)
+$UUID = syntactic sugar for getting your university ID (e.g., u0123456)
 
 $COMMON = base directory for UCGD common files (apps, data, etc.)
 
 $APPS = base directory for group application installations (used by
 modules)
 
-$MODULEFILES = base directory for lua module configuration files
+$MODULEFILES = base directory for Lua module configuration files
 
 $SCRIPTS = base directory for UCGD template shell scripts and
 environment configuration files
@@ -136,7 +136,7 @@ $REDWOOD3_BASE = redwood3 URL (convenient for ssh between clusters)
 $TRANSFER_BASE = general environment transfer URL (convenient for ssh
 between clusters)
 
-$TRANSFER_BASE = protected environment URL (convenient for ssh between
+$TRANSFERPE_BASE = protected environment transfer URL (convenient for ssh between
 clusters)
 
 $ASH = $ASH_BASE plus your $UUID (convenient for scp)

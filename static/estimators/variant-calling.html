@@ -1,0 +1,495 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>UCGD Variant Calling Estimator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap">
+<style>
+/* Layout: same two-column tool as the UCGD S3 estimator. Sticky input panel on the left, stacked result sections on the right; one column on phones. */
+:root {
+  --bg: #f5f7f7; --surface: #ffffff; --fg: #142024; --muted: #5b6b70; --line: #d9e1e2;
+  --accent: #0f6e74; --accent-soft: #e2f0f0; --good: #1d7a45; --good-soft: #e3f3e9;
+  --warn: #9a5b00; --warn-soft: #fbefd9;
+  --display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --mast-bg: #0b3a3e; --mast-bg2: #0f4d52; --mast-fg: #f1f7f6; --mast-muted: #a8c6c4; --brass: #c9a86a;
+  --shadow: 0 1px 2px rgba(16, 42, 46, .05), 0 10px 28px -14px rgba(16, 42, 46, .18);
+  --ring: rgba(15, 110, 116, .18); --hover: #f3f8f8;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1517; --surface: #152023; --fg: #e3ecec; --muted: #93a6aa; --line: #26363a;
+    --accent: #5cc4c4; --accent-soft: #173336; --good: #6fd39a; --good-soft: #15301f;
+    --warn: #f0b860; --warn-soft: #33270f;
+    --mast-bg: #0d2629; --mast-bg2: #123236; --mast-fg: #eaf3f2; --mast-muted: #8fb0ae; --brass: #d4b77e;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 12px 30px -16px rgba(0,0,0,.6); --ring: rgba(92,196,196,.22); --hover: #1a282b;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1517; --surface: #152023; --fg: #e3ecec; --muted: #93a6aa; --line: #26363a;
+  --accent: #5cc4c4; --accent-soft: #173336; --good: #6fd39a; --good-soft: #15301f;
+  --warn: #f0b860; --warn-soft: #33270f;
+  --mast-bg: #0d2629; --mast-bg2: #123236; --mast-fg: #eaf3f2; --mast-muted: #8fb0ae; --brass: #d4b77e;
+  --shadow: 0 1px 2px rgba(0,0,0,.3), 0 12px 30px -16px rgba(0,0,0,.6); --ring: rgba(92,196,196,.22); --hover: #1a282b;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 15px; line-height: 1.5; }
+.wrap { max-width: 1320px; margin: 0 auto; padding-block: 28px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+header.top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 12px 24px;
+  background: linear-gradient(135deg, var(--mast-bg) 0%, var(--mast-bg2) 100%); color: var(--mast-fg);
+  border-radius: 14px; padding: 30px 32px; box-shadow: var(--shadow); position: relative; overflow: hidden; margin-bottom: 26px; }
+header.top::after { content: ""; position: absolute; left: 32px; right: 32px; bottom: 0; height: 2px;
+  background: linear-gradient(90deg, var(--brass), transparent 70%); opacity: .8; }
+@media (max-width: 600px) { header.top { padding: 22px 20px; } header.top::after { left: 20px; right: 20px; } }
+h1 { font-family: var(--display); font-size: 2.05rem; font-weight: 600; line-height: 1.15; margin: 0; letter-spacing: -0.02em; text-wrap: balance; }
+h1 .seq { font-family: var(--mono); font-size: .8rem; font-weight: 500; color: var(--brass); letter-spacing: .32em; display: block; margin-bottom: 10px; }
+.sub { color: var(--mast-muted); margin: 6px 0 0; max-width: 62ch; }
+.asof { font-family: var(--mono); font-size: .78rem; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.16); color: var(--mast-muted); border-radius: 999px; padding: 7px 14px; }
+.grid { display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: 24px; align-items: start; }
+@media (max-width: 920px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+aside.inputs { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); background: var(--surface); border: 1px solid var(--line);
+  border-radius: 14px; box-shadow: var(--shadow); padding: 22px; display: flex; flex-direction: column; gap: 20px; }
+@media (max-width: 920px) { aside.inputs { position: static; } }
+fieldset { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+legend { font-family: var(--display); font-weight: 600; font-size: .78rem; text-transform: uppercase; letter-spacing: .08em; color: var(--accent); margin-bottom: 4px; padding: 0; }
+label { display: flex; flex-direction: column; gap: 4px; font-size: .85rem; color: var(--muted); }
+label.check { flex-direction: row; align-items: center; gap: 8px; color: var(--fg); }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: end; }
+input[type=number], select { font: inherit; font-family: var(--mono); font-size: .92rem; color: var(--fg); background: var(--surface); border: 1px solid var(--line);
+  border-radius: 8px; padding: 8px 10px; width: 100%; min-width: 0; transition: border-color .15s, box-shadow .15s; }
+input[type=number]:hover, select:hover { border-color: var(--muted); }
+input[type=number]:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--ring); }
+input:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+input[type=number]:disabled { opacity: .55; }
+.seg { display: grid; grid-template-columns: 1fr; border: 1px solid var(--line); border-radius: 9px; padding: 3px; background: var(--bg); gap: 3px; }
+.seg button { font: inherit; font-size: .85rem; border: 0; padding: 7px 10px; text-align: left; border-radius: 7px; background: transparent; color: var(--muted); cursor: pointer; transition: background .15s, color .15s; }
+.seg button[aria-pressed=true] { background: var(--accent); color: var(--surface); font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,.18); }
+.total-pill { font-family: var(--mono); background: var(--accent-soft); color: var(--accent); border-radius: 8px; padding: 8px 10px; font-size: .88rem; font-weight: 500; }
+.hint { font-size: .78rem; color: var(--muted); margin: 0; }
+main { display: flex; flex-direction: column; gap: 22px; min-width: 0; }
+section.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); padding: 24px 26px; min-width: 0; }
+@media (max-width: 600px) { section.card { padding: 18px; } aside.inputs { padding: 18px; } }
+section.card > h2 { font-family: var(--display); font-size: 1.25rem; font-weight: 600; letter-spacing: -0.01em; margin: 0 0 6px; display: flex; gap: 10px; align-items: center; }
+section.card > h2 .n { display: inline-grid; place-items: center; min-width: 30px; height: 22px; padding: 0 6px; border-radius: 999px;
+  background: var(--accent-soft); font-family: var(--mono); font-size: .72rem; color: var(--accent); font-weight: 600; letter-spacing: .04em; }
+section.card > p.lead { color: var(--muted); margin: 0 0 14px; font-size: .9rem; max-width: 75ch; }
+.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 700px) { .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.stat { border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; background: var(--surface); display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.stat .k { font-size: .72rem; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); }
+.stat .v { font-family: var(--display); font-size: 1.5rem; font-weight: 600; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.stat .d { font-size: .78rem; color: var(--muted); }
+.stat.lead1 { background: var(--accent-soft); border-color: transparent; }
+.stat.lead1 .v { color: var(--accent); }
+.stat.complete { grid-column: 1 / -1; flex-direction: row; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 24px;
+  background: linear-gradient(135deg, var(--mast-bg) 0%, var(--mast-bg2) 100%); border-color: transparent; padding: 16px 20px; }
+.stat.complete > div { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1 1 320px; }
+.stat.complete .k { color: var(--brass); }
+.stat.complete .d { color: var(--mast-muted); }
+.stat.complete .v { color: var(--mast-fg); font-size: 1.9rem; }
+.stat.complete .cname { font-family: var(--display); font-weight: 600; font-size: 1.05rem; color: var(--mast-fg); }
+.tbl { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; }
+table { border-collapse: collapse; width: 100%; font-size: .86rem; }
+th, td { padding: 9px 11px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; background: var(--bg); white-space: nowrap; padding-block: 11px; }
+tr:last-child td { border-bottom: 0; }
+td.num, th.num { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+td .cls { font-weight: 600; }
+td .note { display: block; font-family: var(--body); font-size: .76rem; color: var(--muted); margin-top: 2px; max-width: 40ch; }
+tr.group td { background: var(--bg); font-weight: 600; font-size: .78rem; text-transform: uppercase; letter-spacing: .06em; color: var(--accent); padding-block: 6px; }
+tr.total td { background: var(--good-soft); font-weight: 600; }
+tr.total td:first-child { box-shadow: inset 3px 0 0 var(--good); }
+tr.dim td { color: var(--muted); }
+tr.here td { box-shadow: inset 0 1px 0 var(--accent), inset 0 -1px 0 var(--accent); }
+tr.here td:first-child { box-shadow: inset 3px 0 0 var(--accent), inset 0 1px 0 var(--accent), inset 0 -1px 0 var(--accent); }
+tbody tr:not(.group):not(.total):hover td { background: var(--hover); }
+.pill { display: inline-block; font-size: .72rem; font-weight: 600; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+.pill.on { background: var(--good-soft); color: var(--good); }
+.pill.off { background: var(--bg); color: var(--muted); border: 1px solid var(--line); }
+.pill.min { background: var(--warn-soft); color: var(--warn); }
+.notes { margin: 14px 0 0; padding-left: 18px; color: var(--muted); font-size: .84rem; display: flex; flex-direction: column; gap: 6px; max-width: 90ch; }
+.callout { border-radius: 12px; padding: 14px 16px; background: var(--accent-soft); font-size: .86rem; margin-top: 14px; }
+.callout strong { color: var(--accent); }
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; }
+.btn { font: inherit; font-size: .85rem; font-weight: 600; border: 1px solid var(--accent); background: var(--accent); color: var(--surface); border-radius: 9px; padding: 10px 16px; cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0,0,0,.12), 0 6px 14px -8px var(--accent); transition: transform .12s, filter .12s; }
+.btn:hover { filter: brightness(1.08); transform: translateY(-1px); }
+.btn.ghost { background: transparent; color: var(--accent); box-shadow: none; }
+details.prices summary { cursor: pointer; font-family: var(--display); font-weight: 600; font-size: 1.05rem; }
+.pgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px 16px; margin-top: 14px; }
+.pgrid h3 { grid-column: 1 / -1; font-family: var(--display); font-size: .8rem; text-transform: uppercase; letter-spacing: .08em; color: var(--accent); margin: 10px 0 0; }
+textarea#quote { width: 100%; min-height: 240px; font-family: var(--mono); font-size: .8rem; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 10px; padding: 10px; margin-top: 10px; }
+.toast { font-size: .82rem; color: var(--good); align-self: center; }
+footer { color: var(--muted); font-size: .78rem; margin-top: 26px; border-top: 1px solid var(--line); padding-top: 16px; }
+footer a, a.inl { color: var(--accent); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } .btn:hover { transform: none; } }
+</style>
+<link rel="icon" href="../img/ucgd.png">
+<script>
+/* Follow the UCGD Core site's light/dark choice (Docusaurus stores it as "theme"). */
+try { var t = localStorage.getItem("theme"); if (t === "dark" || t === "light") document.documentElement.setAttribute("data-theme", t); } catch (e) {}
+</script>
+<style>
+/* UCGD Core site bar */
+body { margin: 0; }
+.ucgd-bar { position: sticky; top: 0; z-index: 20; background: color-mix(in srgb, var(--surface) 82%, transparent); backdrop-filter: saturate(160%) blur(12px); -webkit-backdrop-filter: saturate(160%) blur(12px); border-bottom: 1px solid var(--line); }
+.ucgd-bar::before { content: ""; display: block; height: 3px; background: linear-gradient(90deg, #1e9ad5 0 25%, #86a640 25% 50%, #a66aac 50% 75%, #c02137 75% 100%); }
+.ucgd-bar .in { max-width: 1320px; margin: 0 auto; padding: 10px max(16px, env(safe-area-inset-left, 0px)); display: flex; align-items: center; gap: 14px; font-size: .86rem; }
+.ucgd-bar a { color: var(--fg); text-decoration: none; }
+.ucgd-bar a:hover { color: var(--accent); }
+.ucgd-bar .brand { display: flex; align-items: center; gap: 9px; font-family: var(--display); font-weight: 700; letter-spacing: -.01em; font-size: .98rem; }
+.ucgd-bar .brand img { width: 26px; height: 24px; }
+.ucgd-bar .crumb { color: var(--muted); display: flex; gap: 8px; align-items: center; }
+.ucgd-bar .sp { flex: 1; }
+.ucgd-bar .alt { border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px; color: var(--muted); }
+.ucgd-bar .alt:hover { border-color: var(--accent); }
+@media (max-width: 640px) { .ucgd-bar .crumb, .ucgd-bar .alt { display: none; } }
+@media print { .ucgd-bar { display: none; } }
+@media (min-width: 921px) { aside.inputs { top: 66px !important; } }
+</style>
+</head>
+<body>
+<nav class="ucgd-bar" aria-label="UCGD Core">
+  <div class="in">
+    <a class="brand" href="../"><img src="../img/logo.svg" alt="">UCGD Core</a>
+    <span class="crumb">/ <a href="./">Estimators</a></span>
+    <span class="sp"></span>
+    <a class="alt" href="s3-storage.html">S3 storage estimator &rarr;</a>
+    <a href="../docs/Homepage">Documentation</a>
+  </div>
+</nav>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1><span class="seq">UCGD</span>Variant Calling Cost Estimator</h1>
+      <p class="sub">Enter a client's sample count and sequencing type to estimate variant calling, joint genotyping, post-VCF research analysis and custom development costs at UCGD core facility rates.</p>
+    </div>
+    <div class="asof">Rates: UCGD core facility · published Nov 2026 · editable below</div>
+  </header>
+
+  <div class="grid">
+    <aside class="inputs" aria-label="Estimate inputs">
+      <fieldset>
+        <legend>Service</legend>
+        <div class="seg" role="group" aria-label="Service">
+          <button type="button" id="tWGS" data-t="wgs" aria-pressed="true">Variant calling: WGS</button>
+          <button type="button" id="tWES" data-t="wes" aria-pressed="false">Variant calling: WES</button>
+          <button type="button" id="tBoth" data-t="both" aria-pressed="false">Variant calling: WGS + WES</button>
+          <button type="button" id="tJG" data-t="jg" aria-pressed="false">Joint genotyping</button>
+        </div>
+        <label id="jgLbl" hidden>Samples to joint genotype<input type="number" id="nJG" min="0" step="1" value="250"></label>
+        <label id="wgsLbl">Whole genome (WGS) samples<input type="number" id="nWGS" min="0" step="1" value="250"></label>
+        <label id="wesLbl" hidden>Whole exome (WES) samples<input type="number" id="nWES" min="0" step="1" value="0"></label>
+        <div class="total-pill" id="totalPill"></div>
+        <p class="hint" id="vcHint">Per-sample rates step down by volume: the first 100 samples are billed at the top rate, samples 101–500 at the next, and so on. A $230 minimum applies.</p>
+        <p class="hint" id="jgHint" hidden>$230 setup plus $2 per sample. For combining samples from separate projects where variant calling is already done; no variant calling is charged.</p>
+      </fieldset>
+
+      <fieldset>
+        <legend>Analyst hours</legend>
+        <div class="row2">
+          <label>Post-VCF research analysis (hrs)<input type="number" id="hPost" min="0" step="0.5" value="20"></label>
+          <label>Custom development (hrs)<input type="number" id="hDev" min="0" step="0.5" value="0"></label>
+        </div>
+        <p class="hint">Both billed at $115/hr. Post-VCF covers downstream discovery work with collaborating analysts; custom development covers bespoke software and workflows.</p>
+      </fieldset>
+
+      <fieldset>
+        <legend>Extra storage &amp; backup</legend>
+        <div class="row2">
+          <label>Data (TB)<input type="number" id="stTB" min="0" step="any" value="0"></label>
+          <label>Extra years<input type="number" id="stYears" min="0" step="1" value="0"></label>
+        </div>
+        <p class="hint">WGS and WES samples already include one year of storage, backup and Mosaic access. Add years beyond that here at $85/TB/year.</p>
+      </fieldset>
+
+      <fieldset>
+        <legend>Quote adjustments</legend>
+        <label>Rate adjustment %<input type="number" id="adj" step="any" value="0"></label>
+        <p class="hint">Leave at 0 for published UCGD rates. External academic and commercial rates are set by UCGD on request.</p>
+      </fieldset>
+
+      <div class="toolbar">
+        <button type="button" class="btn" id="copyBtn">Copy client summary</button>
+        <span class="toast" id="toast" aria-live="polite"></span>
+      </div>
+    </aside>
+
+    <main>
+      <section class="card">
+        <h2><span class="n">01</span>Summary</h2>
+        <p class="lead" id="summaryLead"></p>
+        <div class="stats" id="stats"></div>
+      </section>
+
+      <section class="card">
+        <h2><span class="n">02</span><span id="s2Title">Variant calling by volume tier</span></h2>
+        <p class="lead" id="s2Lead">How the per-sample charge builds up across the volume tiers. Each tier only applies to the samples that fall inside it.</p>
+        <div class="tbl"><table id="tierTbl"></table></div>
+        <ul class="notes" id="jgNotes" hidden>
+          <li>Joint genotyping combines samples from separate projects where variant calling has already been done. It is quoted on its own, without variant calling charges.</li>
+          <li>The UCGD rate page lists the included year of storage for WGS, WES and RNA samples only, so it is not assumed here. Use the extra storage fields if the client needs storage.</li>
+        </ul>
+        <ul class="notes" id="vcNotes">
+          <li>Variant calling includes consult time with the UCGD bioinformatics team, receipt of data from the sequencing vendor, one year of storage and access at CHPC, and final storage after the project ends.</li>
+          <li>With "Both" selected, WGS and WES samples are tiered separately, each on its own rate card. The $230 minimum applies to the combined variant calling charge.</li>
+        </ul>
+      </section>
+
+      <section class="card">
+        <h2><span class="n">03</span>Full project line items</h2>
+        <p class="lead">Every billable item in this estimate. Items left at zero are shown for reference so the client can see what else is available.</p>
+        <div class="tbl"><table id="lineTbl"></table></div>
+        <div class="callout"><strong>Hour estimates.</strong> Post-VCF analysis and custom development are billed for actual time. Treat the hours entered here as a planning figure, and confirm scope with the UCGD analyst before quoting a fixed amount.</div>
+      </section>
+
+      <section class="card">
+        <h2><span class="n">04</span>Cost per sample at scale</h2>
+        <p class="lead">Variant calling and joint genotyping cost for common project sizes, so clients can see how volume lowers the average price. The highlighted row is closest to the current estimate.</p>
+        <div class="tbl"><table id="scaleTbl"></table></div>
+      </section>
+
+      <section class="card">
+        <details class="prices">
+          <summary>Pricing assumptions (edit to update rates)</summary>
+          <p class="hint" style="margin-top:8px">All values are USD. Check the <a class="inl" href="https://ucgd.genetics.utah.edu/core-facility/" target="_blank" rel="noopener">UCGD core facility page</a> before sending a formal quote. Edits are saved in this browser only.</p>
+          <div class="pgrid" id="pgrid"></div>
+          <div class="toolbar" style="margin-top:14px"><button type="button" class="btn ghost" id="resetPrices">Reset to default rates</button></div>
+        </details>
+      </section>
+
+      <section class="card">
+        <h2><span class="n">05</span>Client summary text</h2>
+        <p class="lead">Plain-text summary of the current estimate for an email or quote.</p>
+        <textarea id="quote" readonly aria-label="Client summary text"></textarea>
+      </section>
+    </main>
+  </div>
+  <footer>Rates are from the <a href="https://ucgd.genetics.utah.edu/core-facility/" target="_blank" rel="noopener">UCGD core facility page</a> (checked Nov 11, 2026). NIH-funded projects may receive up to 100 TB of storage at no charge, depending on project needs. For external academic and commercial rates, contact Carson Holt (carson.holt@genetics.utah.edu). Estimates exclude sequencing, University F&amp;A and any charges not listed on the rate page.</footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  const DEFAULTS = {
+    wgs1: 80, wgs2: 70, wgs3: 60, wgs4: 40, wgs5: 20,
+    wes1: 50, wes2: 40, wes3: 30, wes4: 20, wes5: 15,
+    vcMin: 230, jgSetup: 230, jgPer: 2, postHr: 115, devHr: 115, storTB: 85
+  };
+  const LABELS = [
+    ["Whole genome (WGS), per sample", [["wgs1","Samples 1–100"],["wgs2","Samples 101–500"],["wgs3","Samples 501–1,000"],["wgs4","Samples 1,001–2,000"],["wgs5","Each sample over 2,000"]]],
+    ["Whole exome (WES), per sample", [["wes1","Samples 1–100"],["wes2","Samples 101–500"],["wes3","Samples 501–1,000"],["wes4","Samples 1,001–2,000"],["wes5","Each sample over 2,000"]]],
+    ["Other services", [["vcMin","Variant calling minimum charge"],["jgSetup","Joint genotyping setup"],["jgPer","Joint genotyping, per sample"],
+      ["postHr","Post-VCF research analysis, per hour"],["devHr","Custom development, per hour"],["storTB","Extra storage & backup, per TB per year"]]]
+  ];
+  const BANDS = [[1, 100], [101, 500], [501, 1000], [1001, 2000], [2001, Infinity]];
+  const KEY = "ucgd-vc-rates-v1";
+  let P = Object.assign({}, DEFAULTS);
+  try { const s = JSON.parse(localStorage.getItem(KEY) || "null"); if (s) Object.assign(P, s); } catch (e) {}
+  const $ = (id) => document.getElementById(id);
+  let type = "wgs";
+
+  function num(id) { const v = parseFloat($(id).value); return isFinite(v) ? v : 0; }
+  function ints(id) { return Math.max(0, Math.round(num(id))); }
+  const adjF = () => 1 + num("adj") / 100;
+  function money(x, raw) {
+    if (!raw) x = x * adjF();
+    if (!isFinite(x)) return "–";
+    if (x === 0) return "$0";
+    if (Math.abs(x) >= 1000) return "$" + Math.round(x).toLocaleString("en-US");
+    return "$" + x.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  const fmtN = (n) => n.toLocaleString("en-US");
+  const bandLabel = (b) => b[1] === Infinity ? "Over " + fmtN(b[0] - 1) : fmtN(b[0]) + "–" + fmtN(b[1]);
+  const rates = (t) => [1, 2, 3, 4, 5].map((i) => P[t + i]);
+
+  // Graduated tiers: each band's rate applies only to the samples inside that band.
+  function tierBreak(n, t) {
+    const r = rates(t);
+    return BANDS.map((b, i) => {
+      const cnt = Math.max(0, Math.min(n, b[1]) - b[0] + 1);
+      return { band: b, rate: r[i], n: cnt, cost: cnt * r[i] };
+    });
+  }
+  const vcRaw = (n, t) => tierBreak(n, t).reduce((s, x) => s + x.cost, 0);
+
+  function model() {
+    const isJG = type === "jg";
+    const nW = type === "wgs" || type === "both" ? ints("nWGS") : 0;
+    const nE = type === "wes" || type === "both" ? ints("nWES") : 0;
+    const nVC = nW + nE;
+    const rawW = vcRaw(nW, "wgs"), rawE = vcRaw(nE, "wes");
+    const rawVC = rawW + rawE;
+    const vc = nVC > 0 ? Math.max(rawVC, P.vcMin) : 0;
+    const minApplied = nVC > 0 && rawVC < P.vcMin;
+    const nJG = isJG ? ints("nJG") : 0;
+    const jg = nJG > 0 ? P.jgSetup + nJG * P.jgPer : 0;
+    const nAll = isJG ? nJG : nVC;
+    const svc = isJG ? jg : vc;
+    const hPost = Math.max(0, num("hPost")), hDev = Math.max(0, num("hDev"));
+    const post = hPost * P.postHr, dev = hDev * P.devHr;
+    const tb = Math.max(0, num("stTB")), yrs = Math.max(0, Math.round(num("stYears")));
+    const stor = tb * yrs * P.storTB;
+    const total = svc + post + dev + stor;
+    return { isJG, nW, nE, nVC, nAll, rawW, rawE, rawVC, vc, minApplied, nJG, jg, svc, hPost, hDev, post, dev, tb, yrs, stor, total };
+  }
+
+  function render() {
+    const m = model();
+    const adj = num("adj");
+    const svcName = m.isJG ? "Joint genotyping" : "Variant calling";
+    const typeName = m.isJG ? "joint genotyping" : type === "wgs" ? "whole genome" : type === "wes" ? "whole exome" : "whole genome + whole exome";
+
+    $("totalPill").textContent = fmtN(m.nAll) + " samples · " + (m.nAll ? money(m.svc / m.nAll) + " avg per sample" : "no samples");
+
+    // ---- summary ----
+    $("summaryLead").textContent = fmtN(m.nAll) + " samples, " + typeName +
+      " · " + (m.hPost + m.hDev) + " analyst hours" + (adj ? " · includes " + adj + "% rate adjustment" : "") + ".";
+    const stat = (k, v, d, cls) => '<div class="stat' + (cls ? " " + cls : "") + '"><span class="k">' + k + '</span><span class="v">' + v + '</span><span class="d">' + d + '</span></div>';
+    const parts = [[svcName, m.svc], ["Post-VCF analysis", m.post], ["Custom development", m.dev], ["Extra storage", m.stor]]
+      .filter((p) => p[1] > 0).map((p) => p[0] + " " + money(p[1]));
+    const svcDetail = !m.nAll ? "No samples entered" : m.isJG
+      ? fmtN(m.nJG) + " samples · " + money(P.jgSetup) + " setup + " + money(P.jgPer) + "/sample"
+      : fmtN(m.nAll) + " samples · " + money(m.vc / m.nAll) + " each" + (m.minApplied ? " · minimum applied" : "");
+    $("stats").innerHTML =
+      stat(svcName, money(m.svc), svcDetail, "lead1") +
+      stat("Analyst hours", money(m.post + m.dev), (m.hPost + m.hDev) + " hrs · post-VCF " + m.hPost + " h, development " + m.hDev + " h") +
+      stat("Extra storage", money(m.stor), m.stor ? m.tb + " TB × " + m.yrs + " yr at " + money(P.storTB) + "/TB/yr" : "None added") +
+      '<div class="stat complete"><div><span class="k">Estimated project total</span><span class="cname">' + typeName.charAt(0).toUpperCase() + typeName.slice(1) + " project</span>" +
+      '<span class="d">' + (parts.join(" · ") || "Enter samples or hours to build an estimate") + '</span></div><span class="v">' + money(m.total) + "</span></div>";
+
+    // ---- section 02: tier table or joint genotyping breakdown ----
+    $("s2Title").textContent = m.isJG ? "Joint genotyping breakdown" : "Variant calling by volume tier";
+    $("s2Lead").textContent = m.isJG ? "A one-time setup charge plus a flat rate for every sample in the joint call set. There are no volume tiers."
+      : "How the per-sample charge builds up across the volume tiers. Each tier only applies to the samples that fall inside it.";
+    $("jgNotes").hidden = !m.isJG; $("vcNotes").hidden = m.isJG;
+    let h;
+    if (m.isJG) {
+      h = '<thead><tr><th>Charge</th><th class="num">Rate</th><th class="num">Quantity</th><th class="num">Cost</th></tr></thead><tbody>';
+      h += '<tr><td><span class="cls">Setup</span><span class="note">One-time, per joint genotyping run</span></td><td class="num">' + money(P.jgSetup) + '</td><td class="num">' + (m.nJG ? 1 : 0) + '</td><td class="num"><strong>' + money(m.nJG ? P.jgSetup : 0) + "</strong></td></tr>";
+      h += '<tr><td><span class="cls">Per sample</span><span class="note">Every sample in the joint call set</span></td><td class="num">' + money(P.jgPer) + '</td><td class="num">' + fmtN(m.nJG) + '</td><td class="num"><strong>' + money(m.nJG * P.jgPer) + "</strong></td></tr>";
+      h += '<tr class="total"><td>Joint genotyping total</td><td class="num">' + (m.nJG ? money(m.jg / m.nJG) + " avg" : "–") + '</td><td class="num">' + fmtN(m.nJG) + '</td><td class="num">' + money(m.jg) + "</td></tr>";
+    } else {
+      h = '<thead><tr><th>Tier (sample range)</th><th class="num">Rate / sample</th><th class="num">Samples in tier</th><th class="num">Cost</th></tr></thead><tbody>';
+      const block = (t, n, raw, label) => {
+        h += '<tr class="group"><td colspan="4">' + label + " · " + fmtN(n) + " samples</td></tr>";
+        for (const x of tierBreak(n, t)) {
+          h += '<tr' + (x.n ? "" : ' class="dim"') + '><td>' + bandLabel(x.band) + '</td><td class="num">' + money(x.rate) + '</td><td class="num">' + fmtN(x.n) + '</td><td class="num">' + (x.n ? "<strong>" + money(x.cost) + "</strong>" : "–") + "</td></tr>";
+        }
+        h += '<tr><td><span class="cls">' + label + ' subtotal</span></td><td class="num">' + (n ? money(raw / n) + " avg" : "–") + '</td><td class="num">' + fmtN(n) + '</td><td class="num"><strong>' + money(raw) + "</strong></td></tr>";
+      };
+      if (type !== "wes") block("wgs", m.nW, m.rawW, "Whole genome (WGS)");
+      if (type !== "wgs") block("wes", m.nE, m.rawE, "Whole exome (WES)");
+      h += '<tr class="total"><td>Variant calling total' + (m.minApplied ? ' <span class="pill min">' + money(P.vcMin) + " minimum applied</span>" : "") + '</td><td class="num">' + (m.nAll ? money(m.vc / m.nAll) + " avg" : "–") + '</td><td class="num">' + fmtN(m.nAll) + '</td><td class="num">' + money(m.vc) + "</td></tr>";
+    }
+    $("tierTbl").innerHTML = h + "</tbody>";
+
+    // ---- line items ----
+    const row = (name, note, qty, rate, cost, on) => '<tr' + (on ? "" : ' class="dim"') + '><td><span class="cls">' + name + '</span><span class="note">' + note + '</span></td><td class="num">' + qty + '</td><td class="num">' + rate + '</td><td class="num">' + (on ? "<strong>" + money(cost) + "</strong>" : "$0") + '</td><td><span class="pill ' + (on ? "on" : "off") + '">' + (on ? "Included" : "Not included") + "</span></td></tr>";
+    h = '<thead><tr><th>Service</th><th class="num">Quantity</th><th class="num">Rate</th><th class="num">Cost</th><th>Status</th></tr></thead><tbody>';
+    if (m.isJG) {
+      h += row("Joint genotyping", money(P.jgSetup) + " setup, then " + money(P.jgPer) + " per sample", fmtN(m.nJG) + " samples", money(P.jgSetup) + " + " + money(P.jgPer) + "/sample", m.jg, m.jg > 0);
+    } else {
+      if (type !== "wes") h += row("Variant calling, whole genome", "Volume-tiered; see section 02", fmtN(m.nW) + " samples", money(P.wgs5) + "–" + money(P.wgs1), m.rawW, m.nW > 0);
+      if (type !== "wgs") h += row("Variant calling, whole exome", "Volume-tiered; see section 02", fmtN(m.nE) + " samples", money(P.wes5) + "–" + money(P.wes1), m.rawE, m.nE > 0);
+      if (m.minApplied) h += row("Minimum charge top-up", "Brings variant calling up to the " + money(P.vcMin) + " minimum", "–", money(P.vcMin) + " min", m.vc - m.rawVC, true);
+    }
+    h += row("Post-VCF research analysis", "Downstream discovery analyses with collaborating analysts", m.hPost + " hrs", money(P.postHr) + "/hr", m.post, m.post > 0);
+    h += row("Custom development", "Custom software and workflow development", m.hDev + " hrs", money(P.devHr) + "/hr", m.dev, m.dev > 0);
+    h += row("Extra storage & backup", m.isJG ? "Storage, backup and Mosaic access" : "Beyond the first year included with each sample; includes Mosaic access", m.tb + " TB × " + m.yrs + " yr", money(P.storTB) + "/TB/yr", m.stor, m.stor > 0);
+    h += '<tr class="total"><td>Estimated project total</td><td class="num"></td><td class="num"></td><td class="num">' + money(m.total) + "</td><td></td></tr>";
+    $("lineTbl").innerHTML = h + "</tbody>";
+
+    // ---- scale table ----
+    const sizes = [10, 50, 100, 250, 500, 1000, 2000, 5000, 10000];
+    const cur = m.nAll;
+    let near = sizes.reduce((a, b) => (Math.abs(b - cur) < Math.abs(a - cur) ? b : a));
+    h = '<thead><tr><th class="num">Samples</th><th class="num">WGS total</th><th class="num">WGS per sample</th><th class="num">WES total</th><th class="num">WES per sample</th><th class="num">Joint genotyping</th><th class="num">JG per sample</th></tr></thead><tbody>';
+    for (const n of sizes) {
+      const w = Math.max(vcRaw(n, "wgs"), P.vcMin), e = Math.max(vcRaw(n, "wes"), P.vcMin), j = P.jgSetup + n * P.jgPer;
+      h += '<tr' + (n === near && cur > 0 ? ' class="here"' : "") + '><td class="num">' + fmtN(n) + '</td><td class="num"><strong>' + money(w) + '</strong></td><td class="num">' + money(w / n) + '</td><td class="num"><strong>' + money(e) + '</strong></td><td class="num">' + money(e / n) + '</td><td class="num"><strong>' + money(j) + '</strong></td><td class="num">' + money(j / n) + "</td></tr>";
+    }
+    $("scaleTbl").innerHTML = h + "</tbody>";
+
+    // ---- quote text ----
+    const L = [];
+    L.push("UCGD " + svcName + " Cost Estimate");
+    L.push("Prepared " + new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }));
+    L.push("");
+    if (m.nW) L.push("Variant calling, whole genome (" + fmtN(m.nW) + " samples): " + money(m.rawW));
+    if (m.nE) L.push("Variant calling, whole exome (" + fmtN(m.nE) + " samples): " + money(m.rawE));
+    if (m.minApplied) L.push("Minimum charge adjustment: " + money(m.vc - m.rawVC) + " (" + money(P.vcMin) + " minimum)");
+    if (m.jg) L.push("Joint genotyping (" + fmtN(m.nJG) + " samples, " + money(P.jgSetup) + " setup + " + money(P.jgPer) + "/sample): " + money(m.jg));
+    if (m.post) L.push("Post-VCF research analysis (" + m.hPost + " hrs at " + money(P.postHr) + "/hr): " + money(m.post));
+    if (m.dev) L.push("Custom development (" + m.hDev + " hrs at " + money(P.devHr) + "/hr): " + money(m.dev));
+    if (m.stor) L.push("Extra storage & backup (" + m.tb + " TB for " + m.yrs + " yr): " + money(m.stor));
+    L.push("");
+    L.push("Estimated total: " + money(m.total) + (adj ? " (includes " + adj + "% rate adjustment)" : ""));
+    if (m.nAll) L.push("Average " + svcName.toLowerCase() + " cost per sample: " + money(m.svc / m.nAll));
+    L.push("");
+    if (m.isJG) L.push("Joint genotyping combines samples from separate projects where variant calling has already been done.");
+    else L.push("Variant calling includes consult time with the UCGD bioinformatics team, data receipt from the sequencing vendor, one year of storage and access at CHPC, and final storage after project completion.");
+    if (m.post || m.dev) L.push("Hourly services are billed for actual time; hours shown are an estimate.");
+    L.push("Estimate based on published UCGD core facility rates; excludes sequencing and University F&A. Final pricing confirmed by UCGD.");
+    $("quote").value = L.join("\n");
+  }
+
+  // ---- rate editor ----
+  function buildPrices() {
+    let h = "";
+    for (const [grp, items] of LABELS) {
+      h += "<h3>" + grp + "</h3>";
+      for (const [k, lbl] of items) h += '<label>' + lbl + '<input type="number" step="any" min="0" id="p_' + k + '" data-k="' + k + '" value="' + P[k] + '"></label>';
+    }
+    $("pgrid").innerHTML = h;
+  }
+  $("pgrid").addEventListener("input", (e) => {
+    const k = e.target.dataset.k; if (!k) return;
+    const v = parseFloat(e.target.value); P[k] = isFinite(v) ? v : 0;
+    try { localStorage.setItem(KEY, JSON.stringify(P)); } catch (err) {}
+    render();
+  });
+  $("resetPrices").addEventListener("click", () => {
+    P = Object.assign({}, DEFAULTS);
+    try { localStorage.removeItem(KEY); } catch (err) {}
+    buildPrices(); render();
+  });
+
+  // ---- type toggle ----
+  document.querySelectorAll(".seg button").forEach((b) => b.addEventListener("click", () => {
+    type = b.dataset.t;
+    document.querySelectorAll(".seg button").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+    $("wgsLbl").hidden = !(type === "wgs" || type === "both");
+    $("wesLbl").hidden = !(type === "wes" || type === "both");
+    $("jgLbl").hidden = type !== "jg";
+    $("vcHint").hidden = type === "jg";
+    $("jgHint").hidden = type !== "jg";
+    if (type === "wes" && ints("nWES") === 0) $("nWES").value = Math.max(ints("nWGS"), 1);
+    if (type === "both" && ints("nWES") === 0) $("nWES").value = 100;
+    if (type === "wgs" && ints("nWGS") === 0) $("nWGS").value = Math.max(ints("nWES"), 1);
+    render();
+  }));
+
+  document.querySelectorAll("aside input").forEach((el) => el.addEventListener("input", render));
+
+  $("copyBtn").addEventListener("click", () => {
+    const txt = $("quote").value;
+    const done = () => { $("toast").textContent = "Copied"; setTimeout(() => ($("toast").textContent = ""), 2000); };
+    const fallback = () => { const q = $("quote"); q.focus(); q.select(); $("toast").textContent = "Text selected; press Ctrl/Cmd+C"; };
+    try { navigator.clipboard.writeText(txt).then(done, fallback); } catch (e) { fallback(); }
+  });
+
+  buildPrices();
+  render();
+})();
+</script>
+</body>
+</html>

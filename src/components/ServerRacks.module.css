@@ -1,0 +1,24 @@
+.wrap {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: .45;
+  /* Dim behind the text column, full strength on the right. */
+  -webkit-mask-image: linear-gradient(90deg, rgba(0,0,0,.3) 0%, rgba(0,0,0,.3) 40%, #000 62%, #000 100%);
+          mask-image: linear-gradient(90deg, rgba(0,0,0,.3) 0%, rgba(0,0,0,.3) 40%, #000 62%, #000 100%);
+}
+.svg { width: 100%; height: 100%; }
+.rack { fill: #0b171b; stroke: #2f5f66; stroke-width: 1.2; }
+.unit { fill: #10232a; stroke: #1e3a40; stroke-width: 1; }
+.bay { fill: #173840; stroke: #2c5c64; stroke-width: .8; }
+.vent { stroke: #24454b; stroke-width: 1.5; }
+.led { filter: drop-shadow(0 0 2px currentColor); }
+.g { fill: #3fbf6f; color: #3fbf6f; }
+.t { fill: #4fe3d6; color: #4fe3d6; }
+.b { fill: #3f8cff; color: #3f8cff; }
+.a { fill: #f2a33a; color: #f2a33a; }
+.blink { animation-name: blink; animation-iteration-count: infinite; animation-timing-function: steps(1, end); }
+@keyframes blink { 0%, 100% { opacity: 1; } 40% { opacity: .15; } 55% { opacity: 1; } 70% { opacity: .35; } }
+@media (max-width: 996px) { .wrap { opacity: .3; } }
+@media (prefers-reduced-motion: reduce) { .blink { animation: none; } }

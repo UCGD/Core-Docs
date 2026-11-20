@@ -4,9 +4,9 @@ toplevel: true
 title: Resource Overview
 ---
 
-[Node Specifications]
+## Node Specifications
 
-### Interactive Login nodes
+### Interactive Login Nodes
 
 -   redwood4.chpc.utah.edu
     -   Dell R815 Server
@@ -18,7 +18,7 @@ title: Resource Overview
     -   64 cores per node
     -   AMD Opteron Processor 6380
     -   512 GB of RAM
--   redwood3.chpc.utah.edu (recharge center use only)\
+-   redwood3.chpc.utah.edu (recharge center use only)
     -   Dell R730 Server
     -   40 cores per node
     -   Intel Xeon Gold 6148
@@ -29,26 +29,26 @@ title: Resource Overview
     -   Intel Xeon E5-2698 v4
     -   768 GB of RAM
 
-### Job Submissions Nodes
+### Job Submission Nodes
 
 -   28 Dell R630 Servers (non-interactive nodes)
     -   20 cores per node
     -   Intel(R) Xeon(R) CPU E5-2670 v2 @ 2.50GHz
     -   128 GB of RAM
--   [28 Dell R430 Servers (non-interactive
-    nodes)]
+-   28 Dell R430 Servers (non-interactive
+    nodes)
     -   24 cores per node
     -   Intel(R) Xeon(R) CPU E5-2680 v3 @ 2.50GHz
     -   128 GB of RAM
--   [28 Dell R440 Servers (non-interactive
-    nodes)]
+-   28 Dell R440 Servers (non-interactive
+    nodes)
     -   32 cores per node
     -   Intel(R) Xeon(R) Gold 6130 CPU @ 2.10GHz
     -   128 GB of RAM
 
 # Node Access
 
--   Login to nodes (Note: require [multi-factor
+-   Log in to nodes (note: requires [multi-factor
     authentication](https://www.chpc.utah.edu/documentation/software/duo.php))
   
     ```
@@ -65,13 +65,13 @@ title: Resource Overview
 
 # Storage Specifications
 
-### [DDN Lustre (protected environment)]
+### DDN Lustre (protected environment)
 
 -   1 PB (usable)
 -   2 MDS (virtualized), 4 OSS, 14 OST
--   /scratch/ucgd/lustre\
+-   /scratch/ucgd/lustre
     -   Data \$REPOSITORY and recharge center processing location
-    -   Read only access for all non-recharge center work
+    -   Read-only access for all non-recharge center work
 
 ### Intel Lustre (protected environment)
 
@@ -83,8 +83,8 @@ title: Resource Overview
 
     -   User \$SCRATCH and \$WORK directories located here (SCRATCH is
         cleaned periodically)
-    -   600TB and 200 million files group hardlimit quota
-    -   200TB and 50 million file user hardlimit quota
+    -   600 TB and 200 million files group hard limit quota
+    -   200 TB and 50 million files user hard limit quota
 
 ### Isilon (general environment)
 
@@ -92,20 +92,20 @@ title: Resource Overview
 -   $HOME directories (Yandell, Marth, and Quinlan lab members)
     -   Snapshots enabled (once per hour for 24 hours and once per day
         for a week)
-    -   Smart quota\'s enabed\
-        *Advisory: 0.9TB *
-        *Softlimit: 1.0TB *
-        *Hardlimit: 2.0TB *
-        *GracePeriod: 7 Days*
+    -   SmartQuotas enabled
+        -   Advisory: 0.9 TB
+        -   Soft limit: 1.0 TB
+        -   Hard limit: 2.0 TB
+        -   Grace period: 7 days
 -   /uufs/chpc.utah.edu/common/home/yandell-ucgdstor
     -   Accessible to group yandell
-    -   Hardlimit quota set at 100TB
+    -   Hard limit quota set at 100 TB
 -   /uufs/chpc.utah.edu/common/home/marth-ucgdstor
     -   Accessible to group marth
-    -   Hardlimit quota set at 100TB
+    -   Hard limit quota set at 100 TB
 -   /uufs/chpc.utah.edu/common/home/quinlan-ucgdstor
     -   Accessible to group quinlan
-    -   Hardlimit quota set at 100TB
+    -   Hard limit quota set at 100 TB
 
 ### NFS (general environment)
 

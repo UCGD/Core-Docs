@@ -9,7 +9,7 @@ interactive nodes. CHPC has [instructions
 here](https://www.chpc.utah.edu/documentation/software/fastx2.php#utwc).
 
 
-To get setup on Redwood, use one of the following links (authenticate
+To get set up on Redwood, use one of the following links (authenticate
 with CHPC credentials). You must be on campus, using EIHG VPN (Full
 Tunnel), or Campus VPN.
 
@@ -27,16 +27,16 @@ Then download and install the client for your operating system (on Mac
 this is done by simply dragging the downloaded file to your '*Applications*' folder):
 ![](/attachments/13829029/13829032.png)
 
-Once installed, open FastX and click the '*+*' in the top right hand corner, then select '*SSH*':
+Once installed, open FastX and click the '*+*' in the top right-hand corner, then select '*SSH*':
 ![](/attachments/13829029/13829033.png)
 
 You can then add configurations for UCGD servers such as redwood3 or redwood6:
 ![](/attachments/13829029/13829034.png)
 
-Once setup, you will be asked to authenticate with your CHPC credentials (including Duo authentication):
+Once set up, you will be asked to authenticate with your CHPC credentials (including Duo authentication):
 ![](/attachments/13829029/13829035.png)
 
-Once authenticated, click the '*+*' in the top right hand corner. You
+Once authenticated, click the '*+*' in the top right-hand corner. You
 can then choose a desktop style to launch:
 ![](/attachments/13829029/13829036.png)
 

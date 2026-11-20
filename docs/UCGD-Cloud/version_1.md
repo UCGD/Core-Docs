@@ -2,7 +2,7 @@
 
 ### Introduction
 
-This first version of the AWS UCGD-Cloud Pipeline is designed for variant reannotation of existing VCF data files using the Mosaic Calypso pipeline. It is an independent pipeline and is built using our existing [UCGD-Pipeline](https://github.com/UCGD/UCGD-Pipeline) software base.
+This first version of the AWS UCGD-Cloud Pipeline is designed for variant re-annotation of existing VCF data files using the Mosaic Calypso pipeline. It is an independent pipeline and is built using our existing [UCGD-Pipeline](https://github.com/UCGD/UCGD-Pipeline) software base.
 
 To process data in the cloud, `pcluster` is used to build the AWS infrastructure. An AMI startup script provisions the necessary `EC2` compute instance, and the same AMI is used to create a `pcluster` image for the `AWS CloudFormation` stack via `pcluster create-cluster`.
 
@@ -22,13 +22,13 @@ To follow AWS best practices, create a dedicated IAM user with the appropriate p
 
 For optimal security and performance, use:
 
-- Public VPC and subnet for head node access.
-- Private VPC and subnet for compute nodes.
+- A public subnet for head node access.
+- A private subnet for compute nodes.
 - Please review detailed instructions for creating both private and public [VPC](https://docs.aws.amazon.com/vpc/latest/userguide/create-vpc.html) and [Subnet](https://docs.aws.amazon.com/vpc/latest/userguide/configure-subnets.html) needed for your compute environment.
 
 ### pcluster
 
-For our implementation, a simple `t2.micro` instance stores the `pcluster` configuration files, initiates the `AWS CloudFormation` stack, and provides easy access to the head node via `pcluster ssh` command. This instance can be left running or started as needed.
+For our implementation, a simple `t2.micro` instance stores the `pcluster` configuration files, initiates the `AWS CloudFormation` stack, and provides easy access to the head node via the `pcluster ssh` command. This instance can be left running or started as needed.
 
 ***While idle, a HeadNode and a ComputeNode will remain running.***
 
@@ -43,7 +43,7 @@ HeadNode:
   Networking:
     SubnetId: subnet-<PUBLIC SUBNET>
   Ssh:
-    KeyName: <IAM ACCESS KEYS>
+    KeyName: <EC2 KEY PAIR NAME>
   LocalStorage:
     RootVolume:
       Size: 150
@@ -86,7 +86,7 @@ SharedStorage:
       FileSystemId: <EFS ID>
 ```
 
-Below is an example of an addition added to the above configuration file when requesting AWS SPOT instances.
+Below is an example addition to the above configuration file when requesting AWS Spot Instances.
 
 ```
     - Name: ucgd-24xlarge
@@ -100,9 +100,9 @@ Below is an example of an addition added to the above configuration file when re
       AllocationStrategy: price-capacity-optimized
       Networking:
         SubnetIds:
-          - subnet-0f780c14d0d08f90f
+          - subnet-<PRIVATE SUBNET>
       Image:
-        CustomAmi: ami-0714acd72001c3e34
+        CustomAmi: <UCGD SPECIFIC AMI>
 ```
 
 ***Additionally, the UCGD specific AMI can be supplied or built using the supplied `ucgd-cluster-setup.sh` script.***
@@ -112,7 +112,7 @@ Below is an example of an addition added to the above configuration file when re
 ```
 * CapacityType: Supports both ONDEMAND and SPOT instances (listed above).
 * HeadNode InstanceType: m5.large (suggested).
-* ComputeNode InstanceType: should and can change based on compute type.
+* ComputeNode InstanceType: can and should change based on compute type.
 * SharedStorage: EFS, providing elastic storage that scales as needed for genomic processing.
 ```
 
@@ -137,7 +137,7 @@ After testing, an [EFS](https://aws.amazon.com/efs/) drive was selected for its 
 
 Directories therein will contain required background data and can/will be updated as needed.
 
-The Nextflow processing directory is called `nextflow`. This directory will be where data is stored and processed. Each individual directory within should be deleted upon process completion to reduce EFS costs. Processing directories are named after the original Mosaic project by default, allowing ease of discovery when issues arise.
+The Nextflow processing directory is called `nextflow`. This directory will be where data is stored and processed. Each individual directory within should be deleted upon process completion to reduce EFS costs. Processing directories are named after the original Mosaic project by default, making them easy to find when issues arise.
 
 This is an example overview of the current directory structure used under `/common`:
 

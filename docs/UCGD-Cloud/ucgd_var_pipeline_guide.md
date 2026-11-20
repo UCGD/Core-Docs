@@ -15,7 +15,7 @@ This guide provides step-by-step instructions for setting up and running the UCG
 
 ## Step-by-Step Instructions
 
-If you decide not to use the given `variant-caller.sh` script here are explanation of each prompt:
+If you decide not to use the given `variant-caller.sh` script, here is an explanation of each prompt:
 
 ### 1. Start the Script
 
@@ -86,7 +86,7 @@ You will be prompted to enter the following inputs interactively:
 
 1. **Work Directory**
    - Path: `/common/nextflow/$MOSAIC_PROJECT_ID`
-   - Created and permissioned the needed EFS directory for Nextflow execution.
+   - Creates the EFS directory needed for Nextflow execution and sets its permissions.
 
 2. **Processing Directory**
    - Named: `[M]$MOSAIC_PROJECT_ID`
@@ -135,6 +135,6 @@ If not confirmed:
 - **File Validation**: Ensure all paths exist and are accessible.
 - **Permissions**: Ensure necessary AWS and EC2 permissions.
 - **Consistency**: Validate consistency of reference files and project setup.
-- **EFS**: After process completion, you must remember to delete your `/common/nextflow/M[project]` directory, or you will incure `AWS EFS` charges.
+- **EFS**: After process completion, you must remember to delete your `/common/nextflow/M[project]` directory, or you will incur `AWS EFS` charges.
 
 ---
