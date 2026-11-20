@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>UCGD S3 Storage Estimator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap">
+<style>
+/* Layout: two-column tool. Sticky input panel on the left, stacked result sections on the right; one column on phones. */
+:root {
+  --bg: #f5f7f7;
+  --surface: #ffffff;
+  --fg: #142024;
+  --muted: #5b6b70;
+  --line: #d9e1e2;
+  --accent: #0f6e74;
+  --accent-soft: #e2f0f0;
+  --good: #1d7a45;
+  --good-soft: #e3f3e9;
+  --warn: #9a5b00;
+  --warn-soft: #fbefd9;
+  --bad: #a3302a;
+  --bad-soft: #f8e3e1;
+  --display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1517; --surface: #152023; --fg: #e3ecec; --muted: #93a6aa; --line: #26363a;
+    --accent: #5cc4c4; --accent-soft: #173336; --good: #6fd39a; --good-soft: #15301f;
+    --warn: #f0b860; --warn-soft: #33270f; --bad: #f08a80; --bad-soft: #3a1b18; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1517; --surface: #152023; --fg: #e3ecec; --muted: #93a6aa; --line: #26363a;
+  --accent: #5cc4c4; --accent-soft: #173336; --good: #6fd39a; --good-soft: #15301f;
+  --warn: #f0b860; --warn-soft: #33270f; --bad: #f08a80; --bad-soft: #3a1b18; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 15px; line-height: 1.5; }
+.wrap { max-width: 1320px; margin: 0 auto; padding-block: 28px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+header.top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 12px 24px; margin-bottom: 22px; }
+h1 { font-family: var(--display); font-size: 1.9rem; line-height: 1.15; margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
+h1 .seq { font-family: var(--mono); font-size: .8rem; font-weight: 500; color: var(--accent); letter-spacing: .25em; display: block; margin-bottom: 6px; }
+.sub { color: var(--muted); margin: 6px 0 0; max-width: 62ch; }
+.asof { font-family: var(--mono); font-size: .78rem; color: var(--muted); border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; background: var(--surface); }
+.grid { display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: 24px; align-items: start; }
+@media (max-width: 920px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+aside.inputs { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: flex; flex-direction: column; gap: 16px; }
+@media (max-width: 920px) { aside.inputs { position: static; } }
+fieldset { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+legend { font-family: var(--display); font-weight: 600; font-size: .78rem; text-transform: uppercase; letter-spacing: .08em; color: var(--accent); margin-bottom: 4px; padding: 0; }
+label { display: flex; flex-direction: column; gap: 4px; font-size: .85rem; color: var(--muted); }
+label.check { flex-direction: row; align-items: center; gap: 8px; color: var(--fg); }
+label.check.locked { color: var(--muted); }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: end; }
+.row-unit { display: grid; grid-template-columns: 1fr 84px; gap: 8px; }
+input[type=number], select { font: inherit; font-family: var(--mono); font-size: .92rem; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 7px 9px; width: 100%; min-width: 0; }
+input:focus-visible, select:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.seg { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; }
+.seg button { font: inherit; font-size: .85rem; border: 0; padding: 7px; background: var(--bg); color: var(--muted); cursor: pointer; }
+.seg button[aria-pressed=true] { background: var(--accent); color: var(--surface); font-weight: 600; }
+.total-pill { font-family: var(--mono); background: var(--accent-soft); color: var(--accent); border-radius: 6px; padding: 8px 10px; font-size: .88rem; }
+.hint { font-size: .78rem; color: var(--muted); margin: 0; }
+main { display: flex; flex-direction: column; gap: 22px; min-width: 0; }
+section.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 20px; min-width: 0; }
+section.card > h2 { font-family: var(--display); font-size: 1.2rem; margin: 0 0 4px; display: flex; gap: 10px; align-items: baseline; }
+section.card > h2 .n { font-family: var(--mono); font-size: .78rem; color: var(--accent); font-weight: 500; }
+section.card > p.lead { color: var(--muted); margin: 0 0 14px; font-size: .9rem; max-width: 75ch; }
+.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 700px) { .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.stat { border: 1px solid var(--line); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.stat .k { font-size: .72rem; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); }
+.stat .v { font-family: var(--display); font-size: 1.35rem; font-weight: 600; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.stat .d { font-size: .78rem; color: var(--muted); }
+.tbl { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; }
+table { border-collapse: collapse; width: 100%; font-size: .86rem; }
+th, td { padding: 9px 11px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; background: var(--bg); white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+td.num, th.num { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+td .cls { font-weight: 600; }
+td .note { display: block; font-family: var(--body); font-size: .76rem; color: var(--muted); margin-top: 2px; max-width: 34ch; }
+tr.best td { background: var(--good-soft); }
+tr.group td { background: var(--bg); font-weight: 600; font-size: .78rem; text-transform: uppercase; letter-spacing: .06em; color: var(--accent); padding-block: 6px; }
+.pill { display: inline-block; font-size: .72rem; font-weight: 600; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+.pill.instant { background: var(--good-soft); color: var(--good); }
+.pill.mins { background: var(--accent-soft); color: var(--accent); }
+.pill.hours { background: var(--warn-soft); color: var(--warn); }
+.pill.days { background: var(--bad-soft); color: var(--bad); }
+.notes { margin: 14px 0 0; padding-left: 18px; color: var(--muted); font-size: .84rem; display: flex; flex-direction: column; gap: 6px; max-width: 90ch; }
+.callout { border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; background: var(--accent-soft); font-size: .86rem; margin-top: 14px; }
+.callout strong { color: var(--accent); }
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; }
+.btn { font: inherit; font-size: .85rem; font-weight: 600; border: 1px solid var(--accent); background: var(--accent); color: var(--surface); border-radius: 7px; padding: 8px 14px; cursor: pointer; }
+.btn.ghost { background: transparent; color: var(--accent); }
+details.prices summary { cursor: pointer; font-family: var(--display); font-weight: 600; font-size: 1.05rem; }
+.pgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px 16px; margin-top: 14px; }
+.pgrid h3 { grid-column: 1 / -1; font-family: var(--display); font-size: .8rem; text-transform: uppercase; letter-spacing: .08em; color: var(--accent); margin: 10px 0 0; }
+textarea#quote { width: 100%; min-height: 220px; font-family: var(--mono); font-size: .8rem; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 8px; padding: 10px; margin-top: 10px; }
+.toast { font-size: .82rem; color: var(--good); align-self: center; }
+footer { color: var(--muted); font-size: .78rem; margin-top: 26px; }
+footer a { color: var(--accent); }
+/* ---- Premium finish ---- */
+:root {
+  --mast-bg: #0b3a3e; --mast-bg2: #0f4d52; --mast-fg: #f1f7f6; --mast-muted: #a8c6c4; --brass: #c9a86a;
+  --shadow: 0 1px 2px rgba(16, 42, 46, .05), 0 10px 28px -14px rgba(16, 42, 46, .18);
+  --ring: rgba(15, 110, 116, .18); --hover: #f3f8f8;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --mast-bg: #0d2629; --mast-bg2: #123236; --mast-fg: #eaf3f2; --mast-muted: #8fb0ae; --brass: #d4b77e;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 12px 30px -16px rgba(0,0,0,.6); --ring: rgba(92,196,196,.22); --hover: #1a282b; }
+}
+:root[data-theme="dark"] { --mast-bg: #0d2629; --mast-bg2: #123236; --mast-fg: #eaf3f2; --mast-muted: #8fb0ae; --brass: #d4b77e;
+  --shadow: 0 1px 2px rgba(0,0,0,.3), 0 12px 30px -16px rgba(0,0,0,.6); --ring: rgba(92,196,196,.22); --hover: #1a282b; }
+
+header.top { background: linear-gradient(135deg, var(--mast-bg) 0%, var(--mast-bg2) 100%); color: var(--mast-fg);
+  border-radius: 14px; padding: 30px 32px; box-shadow: var(--shadow); position: relative; overflow: hidden; margin-bottom: 26px; }
+header.top::after { content: ""; position: absolute; left: 32px; right: 32px; bottom: 0; height: 2px;
+  background: linear-gradient(90deg, var(--brass), transparent 70%); opacity: .8; }
+@media (max-width: 600px) { header.top { padding: 22px 20px; } header.top::after { left: 20px; right: 20px; } }
+h1 { font-size: 2.05rem; font-weight: 600; letter-spacing: -0.02em; }
+h1 .seq { color: var(--brass); font-weight: 500; letter-spacing: .32em; margin-bottom: 10px; }
+header.top .sub { color: var(--mast-muted); }
+header.top .asof { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.16); color: var(--mast-muted); border-radius: 999px; padding: 7px 14px; }
+
+aside.inputs, section.card { border-radius: 14px; box-shadow: var(--shadow); }
+aside.inputs { padding: 22px; gap: 20px; }
+section.card { padding: 24px 26px; }
+@media (max-width: 600px) { section.card { padding: 18px; } aside.inputs { padding: 18px; } }
+fieldset + fieldset { margin-top: 2px; }
+section.card > h2 { font-size: 1.25rem; font-weight: 600; letter-spacing: -0.01em; align-items: center; margin-bottom: 6px; }
+section.card > h2 .n { display: inline-grid; place-items: center; min-width: 30px; height: 22px; padding: 0 6px; border-radius: 999px;
+  background: var(--accent-soft); font-size: .72rem; font-weight: 600; letter-spacing: .04em; }
+
+input[type=number], select { background: var(--surface); border-radius: 8px; padding: 8px 10px; transition: border-color .15s, box-shadow .15s; }
+input[type=number]:hover, select:hover { border-color: var(--muted); }
+input[type=number]:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--ring); }
+.seg { border-radius: 9px; padding: 3px; background: var(--bg); gap: 3px; }
+.seg button { border-radius: 7px; background: transparent; transition: background .15s, color .15s; }
+.seg button[aria-pressed=true] { box-shadow: 0 1px 3px rgba(0,0,0,.18); }
+.total-pill { border-radius: 8px; font-weight: 500; }
+
+.stats { gap: 14px; }
+.stat { border-radius: 12px; padding: 14px 16px; background: var(--surface); }
+.stat:first-child { background: var(--accent-soft); border-color: transparent; }
+.stat:first-child .v { color: var(--accent); }
+.stat .v { font-size: 1.5rem; letter-spacing: -0.01em; }
+.stat.complete { grid-column: 1 / -1; flex-direction: row; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 24px;
+  background: linear-gradient(135deg, var(--mast-bg) 0%, var(--mast-bg2) 100%); border-color: transparent; padding: 16px 20px; }
+.stat.complete > div { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1 1 320px; }
+.stat.complete .k { color: var(--brass); }
+.stat.complete .d { color: var(--mast-muted); }
+.stat.complete .v { color: var(--mast-fg); font-size: 1.9rem; }
+.stat.complete .cname { font-family: var(--display); font-weight: 600; font-size: 1.05rem; color: var(--mast-fg); }
+.stat.complete .hint2 { font-size: .74rem; opacity: .85; }
+button.stat { font: inherit; text-align: left; color: inherit; cursor: pointer; border: 1px solid var(--line); transition: border-color .15s, box-shadow .15s, transform .12s; }
+button.stat:hover { border-color: var(--accent); transform: translateY(-1px); }
+button.stat[aria-pressed=true] { border-color: var(--accent); box-shadow: 0 0 0 3px var(--ring); }
+button.stat[aria-pressed=true] .k::after { content: " · selected"; color: var(--accent); }
+.linkbtn { font: inherit; background: none; border: 0; padding: 0; color: var(--brass); text-decoration: underline; cursor: pointer; }
+tr.pickrow { cursor: pointer; }
+tr.picked td { box-shadow: inset 0 1px 0 var(--accent), inset 0 -1px 0 var(--accent); }
+tr.picked td:first-child { box-shadow: inset 3px 0 0 var(--accent), inset 0 1px 0 var(--accent), inset 0 -1px 0 var(--accent); }
+@media (prefers-reduced-motion: reduce) { button.stat:hover { transform: none; } }
+
+.tbl { border-radius: 12px; }
+th { padding-block: 11px; }
+tbody tr:not(.group) { transition: background .12s; }
+tbody tr:not(.group):not(.best):hover td { background: var(--hover); }
+tr.best td:first-child { box-shadow: inset 3px 0 0 var(--good); }
+#storageTbl td:first-child, #retTbl td:first-child, #egTbl td:first-child { min-width: 210px; }
+#storageTbl td:nth-child(6) { min-width: 150px; }
+
+.btn { border-radius: 9px; padding: 10px 16px; box-shadow: 0 1px 2px rgba(0,0,0,.12), 0 6px 14px -8px var(--accent); transition: transform .12s, box-shadow .12s, filter .12s; }
+.btn:hover { filter: brightness(1.08); transform: translateY(-1px); }
+.btn.ghost { box-shadow: none; }
+.callout { border-radius: 12px; border-color: transparent; padding: 14px 16px; }
+textarea#quote { border-radius: 10px; }
+.bk-opts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px 14px; align-items: end; }
+@media (max-width: 1000px) { .bk-opts { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 520px) { .bk-opts { grid-template-columns: minmax(0, 1fr); } }
+input[type=text] { font: inherit; font-family: var(--mono); font-size: .92rem; color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; width: 100%; min-width: 0; transition: border-color .15s, box-shadow .15s; }
+input[type=text]:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--ring); }
+input[type=text][aria-invalid=true] { border-color: var(--bad); }
+.bk-err { color: var(--bad); margin-top: 6px; }
+.tabs { display: flex; flex-wrap: wrap; gap: 4px; margin: 16px 0 12px; border-bottom: 1px solid var(--line); }
+.tabs button { font: inherit; font-size: .86rem; font-weight: 600; background: none; border: 0; border-bottom: 2px solid transparent; color: var(--muted); padding: 8px 12px; cursor: pointer; margin-bottom: -1px; }
+.tabs button[aria-selected=true] { color: var(--accent); border-bottom-color: var(--accent); }
+.bk-steps { margin: 0 0 12px; padding-left: 20px; font-size: .88rem; display: flex; flex-direction: column; gap: 4px; max-width: 90ch; }
+.bk-steps code, .notes code { font-family: var(--mono); font-size: .82rem; background: var(--bg); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; overflow-wrap: anywhere; }
+pre.bk-out { margin: 12px 0 0; max-height: 460px; overflow: auto; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 10px; padding: 14px; font-family: var(--mono); font-size: .78rem; line-height: 1.5; white-space: pre; }
+footer { border-top: 1px solid var(--line); padding-top: 16px; }
+
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } .btn:hover { transform: none; } }
+</style>
+<link rel="icon" href="../img/ucgd.png">
+<script>
+/* Follow the UCGD Core site's light/dark choice (Docusaurus stores it as "theme"). */
+try { var t = localStorage.getItem("theme"); if (t === "dark" || t === "light") document.documentElement.setAttribute("data-theme", t); } catch (e) {}
+</script>
+<style>
+/* UCGD Core site bar */
+body { margin: 0; }
+.ucgd-bar { position: sticky; top: 0; z-index: 20; background: color-mix(in srgb, var(--surface) 82%, transparent); backdrop-filter: saturate(160%) blur(12px); -webkit-backdrop-filter: saturate(160%) blur(12px); border-bottom: 1px solid var(--line); }
+.ucgd-bar::before { content: ""; display: block; height: 3px; background: linear-gradient(90deg, #1e9ad5 0 25%, #86a640 25% 50%, #a66aac 50% 75%, #c02137 75% 100%); }
+.ucgd-bar .in { max-width: 1320px; margin: 0 auto; padding: 10px max(16px, env(safe-area-inset-left, 0px)); display: flex; align-items: center; gap: 14px; font-size: .86rem; }
+.ucgd-bar a { color: var(--fg); text-decoration: none; }
+.ucgd-bar a:hover { color: var(--accent); }
+.ucgd-bar .brand { display: flex; align-items: center; gap: 9px; font-family: var(--display); font-weight: 700; letter-spacing: -.01em; font-size: .98rem; }
+.ucgd-bar .brand img { width: 26px; height: 24px; }
+.ucgd-bar .crumb { color: var(--muted); display: flex; gap: 8px; align-items: center; }
+.ucgd-bar .sp { flex: 1; }
+.ucgd-bar .alt { border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px; color: var(--muted); }
+.ucgd-bar .alt:hover { border-color: var(--accent); }
+@media (max-width: 640px) { .ucgd-bar .crumb, .ucgd-bar .alt { display: none; } }
+@media print { .ucgd-bar { display: none; } }
+@media (min-width: 921px) { aside.inputs { top: 66px !important; } }
+</style>
+</head>
+<body>
+<nav class="ucgd-bar" aria-label="UCGD Core">
+  <div class="in">
+    <a class="brand" href="../"><img src="../img/logo.svg" alt="">UCGD Core</a>
+    <span class="crumb">/ <a href="./">Estimators</a></span>
+    <span class="sp"></span>
+    <a class="alt" href="variant-calling.html">Variant calling estimator &rarr;</a>
+    <a href="../docs/Homepage">Documentation</a>
+  </div>
+</nav>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1><span class="seq">UCGD</span>Genomic Data Storage Estimator</h1>
+      <p class="sub">Enter a client's data volume to compare every Amazon S3 storage class, how long it takes to get data back, and what it costs to move data out of AWS.</p>
+    </div>
+    <div class="asof">Rates: US East (N. Virginia) / US West (Oregon) · list prices Nov 2026 · editable below</div>
+  </header>
+
+  <div class="grid">
+    <aside class="inputs" aria-label="Estimate inputs">
+      <fieldset>
+        <legend>Client data</legend>
+        <div class="seg" role="group" aria-label="Size entry mode">
+          <button type="button" id="modeTotal" aria-pressed="true">Total size</button>
+          <button type="button" id="modeSamples" aria-pressed="false">Per sample</button>
+        </div>
+        <div id="totalBox">
+          <label>Total data size
+            <div class="row-unit">
+              <input type="number" id="sizeVal" min="0" step="any" value="250">
+              <select id="sizeUnit"><option value="1">GB</option><option value="1024" selected>TB</option><option value="1048576">PB</option></select>
+            </div>
+          </label>
+        </div>
+        <div id="sampleBox" hidden>
+          <label>Data type
+            <select id="preset">
+              <option value="15">WGS 30x CRAM (~15 GB)</option>
+              <option value="90" selected>WGS 30x BAM (~90 GB)</option>
+              <option value="70">WGS 30x FASTQ.gz (~70 GB)</option>
+              <option value="5">WGS gVCF.gz (~5 GB)</option>
+              <option value="8">WES BAM (~8 GB)</option>
+              <option value="6">WES FASTQ.gz (~6 GB)</option>
+              <option value="4">RNA-seq FASTQ.gz (~4 GB)</option>
+              <option value="custom">Custom</option>
+            </select>
+          </label>
+          <div class="row2">
+            <label>Samples<input type="number" id="nSamples" min="0" step="1" value="1000"></label>
+            <label>GB per sample<input type="number" id="gbPerSample" min="0" step="any" value="90"></label>
+          </div>
+        </div>
+        <div class="total-pill" id="totalPill">250 TB total</div>
+        <label>Average file size (GB)
+          <input type="number" id="avgFile" min="0.001" step="any" value="2">
+        </label>
+        <p class="hint">Sets the object count, which drives request, monitoring and Glacier per-object charges. BAM/CRAM plus index files average a few GB.</p>
+      </fieldset>
+
+      <fieldset>
+        <legend>Storage term</legend>
+        <div class="row2">
+          <label>Months stored<input type="number" id="months" min="1" step="1" value="36"></label>
+          <label>Service markup %<input type="number" id="markup" min="0" step="any" value="0"></label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Compliance</legend>
+        <label class="check"><input type="checkbox" id="phi"> PHI / HIPAA controls</label>
+        <label class="check" id="phiDRLabel"><input type="checkbox" id="phiDR" disabled> Add disaster-recovery copy in another region</label>
+        <p class="hint">Adds a customer-managed KMS encryption key, CloudTrail logging of every file read and write, and optionally a second copy in another region stored in Deep Archive. A signed AWS BAA is required and free.</p>
+      </fieldset>
+
+      <fieldset>
+        <legend>Retrieval &amp; egress</legend>
+        <div class="row2">
+          <label>% of data retrieved<input type="number" id="retPct" min="0" max="100" step="any" value="100"></label>
+          <label>Restored copy kept (days)<input type="number" id="restoreDays" min="1" step="1" value="7"></label>
+        </div>
+        <div class="row2">
+          <label>Download speed (Gbps)<input type="number" id="gbps" min="0.01" step="any" value="1"></label>
+          <label>Egress spread over (months)<input type="number" id="egMonths" min="1" step="1" value="1"></label>
+        </div>
+        <label class="check"><input type="checkbox" id="incEgress" checked> Include egress in complete cost</label>
+        <label class="check" id="restoreLabel"><input type="checkbox" id="incRestore" checked> Include restore / retrieval in complete cost</label>
+        <p class="hint" id="restoreHint">Restore is always included with egress: archived data must be restored, and IA or Glacier Instant data carries a retrieval fee, before it can be downloaded.</p>
+        <label class="check"><input type="checkbox" id="freeTier" checked> Apply 100 GB/month free egress</label>
+        <p class="hint">Download time assumes 80% sustained link utilization.</p>
+      </fieldset>
+
+      <div class="toolbar">
+        <button type="button" class="btn" id="copyBtn">Copy client summary</button>
+        <span class="toast" id="toast" aria-live="polite"></span>
+      </div>
+    </aside>
+
+    <main>
+      <section class="card" id="summaryCard">
+        <h2><span class="n">01</span>Summary</h2>
+        <p class="lead" id="summaryLead"></p>
+        <div class="stats" id="stats"></div>
+      </section>
+
+      <section class="card">
+        <h2><span class="n">02</span>Storage cost by class</h2>
+        <p class="lead">Ongoing cost to keep the full dataset in each class for the chosen term. Totals include the one-time upload request cost and any minimum-duration charge. Uploading into S3 is free. The last two cost columns show what it costs to download the share of data set in "% of data retrieved" (100% = the entire dataset): egress alone, and egress plus the cheapest way to get the data out of that class.</p>
+        <div class="tbl"><table id="storageTbl"></table></div>
+        <ul class="notes">
+          <li>Intelligent-Tiering rows assume the data is untouched after upload, so objects step down automatically (30 days to Infrequent, 90 days to Archive Instant). The "archive tiers on" row assumes the bucket opts into Archive Access at 90 days and Deep Archive Access at 180 days.</li>
+          <li>Glacier Flexible Retrieval and Deep Archive add about 40 KB of metadata per object (32 KB billed at the class rate, 8 KB at Standard).</li>
+          <li>Egress columns use the internet transfer rates and the "egress spread over" and free-allowance settings in the left panel. "Retrieve + egress all" adds retrieval fees, request fees and any restored-copy cost for the share of data set in "% of data retrieved", using the lowest-cost retrieval option for that class. Untick "Include egress in complete cost" to leave egress out, for example when the data will be used inside AWS. Restore and retrieval costs are always included while egress is on, because data has to be restored or retrieved before it can be downloaded. With egress off, untick "Include restore / retrieval" to see storage alone.</li>
+          <li>PHI / HIPAA controls add a KMS key ($1/month for the billed term), KMS and CloudTrail charges on every upload and read, and, if chosen, a second copy in another region stored in Glacier Deep Archive (copy fee plus storage, 180-day minimum). Log storage is not included and is usually a few dollars a month.</li>
+          <li>One Zone-IA keeps a single copy in one Availability Zone. It is a poor fit for a client's only copy of irreplaceable sequence data.</li>
+        </ul>
+      </section>
+
+      <section class="card">
+        <h2><span class="n">03</span>Getting data back out of storage</h2>
+        <p class="lead" id="retLead"></p>
+        <div class="tbl"><table id="retTbl"></table></div>
+        <ul class="notes">
+          <li>"Restore wait" is how long before the data is readable in S3. "Ready to use" adds the download time at the chosen link speed.</li>
+          <li>Restore times are AWS targets. AWS restores large datasets at about 1–2 PB per day per account, so the page uses 1 PB/day as a floor for big restores and marks those rows "(dataset size)". Large restores should be submitted with S3 Batch Operations.</li>
+          <li>Expedited retrieval is meant for urgent requests of up to a few hundred files and is not guaranteed during busy periods unless provisioned capacity is purchased.</li>
+          <li>Restored Glacier data is a temporary copy billed at the Standard rate for the days you keep it. Restored Intelligent-Tiering data moves back to the Frequent Access tier for at least 30 days, shown as one month at the Standard rate. Early deletion before a class minimum is billed as if stored for the full minimum.</li>
+        </ul>
+      </section>
+
+      <section class="card">
+        <h2><span class="n">04</span>Egress fees</h2>
+        <p class="lead" id="egLead"></p>
+        <div class="tbl"><table id="egTbl"></table></div>
+        <h3 style="font-family:var(--display);font-size:1rem;margin:18px 0 8px">If the client takes out part of the data</h3>
+        <div class="tbl"><table id="egScen"></table></div>
+        <div class="callout">
+          <strong>Ways to lower egress.</strong> Qualified research and academic institutions can use the AWS Global Data Egress Waiver, which waives internet egress up to 15% of the account's total monthly AWS bill when the account is set up through an eligible agreement. AWS also waives internet egress for customers moving all of their data off AWS, on request to AWS Support. Moving data to compute in the same region is free.
+        </div>
+      </section>
+
+      <section class="card">
+        <details class="prices" id="pricesBox">
+          <summary>Pricing assumptions (edit to update rates)</summary>
+          <p class="hint" style="margin-top:8px">All values are USD. Storage rates are per GB-month, retrieval per GB, requests per 1,000. Check the <a href="https://aws.amazon.com/s3/pricing/" target="_blank" rel="noopener" style="color:var(--accent)">AWS S3 pricing page</a> before sending a formal quote.</p>
+          <div class="pgrid" id="pgrid"></div>
+          <div class="toolbar" style="margin-top:14px"><button type="button" class="btn ghost" id="resetPrices">Reset to default rates</button></div>
+        </details>
+      </section>
+
+      <section class="card">
+        <h2><span class="n">05</span>Client summary text</h2>
+        <p class="lead">Plain-text summary of the current estimate for an email or quote.</p>
+        <textarea id="quote" readonly aria-label="Client summary text"></textarea>
+      </section>
+      <section class="card" id="bucketCard">
+        <h2><span class="n">06</span>AWS bucket setup</h2>
+        <p class="lead" id="bucketLead"></p>
+        <div class="bk-opts">
+          <label>Bucket name<input type="text" id="bkName" value="ucgd-genomic-data" spellcheck="false" autocomplete="off"></label>
+          <label>Project tag<input type="text" id="bkProject" value="" placeholder="e.g. Smith WGS 2026" autocomplete="off"></label>
+          <label>Client tag<input type="text" id="bkClient" value="" placeholder="e.g. Smith Lab" autocomplete="off"></label>
+          <label id="bkNcLabel">Delete old file versions after (days)<input type="number" id="bkNoncurrent" min="1" step="1" value="30"></label>
+        </div>
+        <label class="check" style="margin-top:10px"><input type="checkbox" id="bkExpire"> Delete all data automatically at the end of the storage term</label>
+        <p class="hint bk-err" id="bkErr" hidden></p>
+        <div class="tabs" role="tablist" aria-label="Output format">
+          <button type="button" role="tab" id="tab-cfn" aria-selected="true" data-tab="cfn">CloudFormation (new bucket)</button>
+          <button type="button" role="tab" id="tab-cli" aria-selected="false" data-tab="cli">CLI script (existing bucket)</button>
+          <button type="button" role="tab" id="tab-lc" aria-selected="false" data-tab="lc">Lifecycle JSON only</button>
+        </div>
+        <ol class="bk-steps" id="bkSteps"></ol>
+        <div class="toolbar">
+          <button type="button" class="btn" id="bkCopy">Copy</button>
+          <button type="button" class="btn ghost" id="bkDownload" hidden>Download file</button>
+          <span class="toast" id="bkToast" aria-live="polite"></span>
+        </div>
+        <pre class="bk-out" id="bkOut" tabindex="0" aria-label="Generated configuration"></pre>
+        <ul class="notes" id="bkNotes"></ul>
+      </section>
+
+    </main>
+  </div>
+  <footer>CHPC Pando pricing is from the <a href="https://www.chpc.utah.edu/resources/pricing.php" target="_blank" rel="noopener">CHPC pricing page</a> (updated Oct 27, 2026): $150/TB plus a 15% install/maintenance fee, one purchase per 5-year term, sold in whole TB. CHPC services also incur University F&amp;A charges. Protected Environment data uses the Elm archive at the same rate. AWS estimates use AWS list prices and exclude tax, negotiated discounts, KMS encryption, replication, and inventory/analytics features. 1 TB = 1,024 GB, matching AWS billing.</footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  const DEFAULTS = {
+    stdT1: 0.023, stdT2: 0.022, stdT3: 0.021,
+    sia: 0.0125, ozia: 0.01, gir: 0.004, gfr: 0.0036, gda: 0.00099,
+    itIA: 0.0125, itAIA: 0.004, itAA: 0.0036, itDAA: 0.00099, itMon: 0.0025,
+    putStd: 0.005, putIT: 0.005, putIA: 0.01, putGIR: 0.02, putGFR: 0.03, putGDA: 0.05,
+    getStd: 0.0004, getIA: 0.001, getGIR: 0.01,
+    retIA: 0.01, retGIR: 0.03,
+    gfrExpGB: 0.03, gfrExpReq: 10, gfrStdGB: 0.01, gfrStdReq: 0.05, gfrBulkGB: 0, gfrBulkReq: 0,
+    gdaStdGB: 0.02, gdaStdReq: 0.10, gdaBulkGB: 0.0025, gdaBulkReq: 0.025,
+    eg1: 0.09, eg2: 0.085, eg3: 0.07, eg4: 0.05, egRegion: 0.02,
+    pandoTB: 172.5, pandoYears: 5, elmTB: 172.5,
+    kmsKey: 1, kmsReq: 0.03, ctData: 0.10
+  };
+  const LABELS = [
+    ["Storage (per GB-month)", [
+      ["stdT1","Standard, first 50 TB"],["stdT2","Standard, next 450 TB"],["stdT3","Standard, over 500 TB"],
+      ["sia","Standard-IA"],["ozia","One Zone-IA"],["gir","Glacier Instant Retrieval"],
+      ["gfr","Glacier Flexible Retrieval"],["gda","Glacier Deep Archive"]]],
+    ["Intelligent-Tiering", [
+      ["itIA","Infrequent Access tier"],["itAIA","Archive Instant Access tier"],["itAA","Archive Access tier"],
+      ["itDAA","Deep Archive Access tier"],["itMon","Monitoring, per 1,000 objects/month"]]],
+    ["Upload (PUT) requests, per 1,000", [
+      ["putStd","Standard"],["putIT","Intelligent-Tiering"],["putIA","Standard-IA / One Zone-IA"],
+      ["putGIR","Glacier Instant"],["putGFR","Glacier Flexible"],["putGDA","Deep Archive"]]],
+    ["Reads and retrieval", [
+      ["getStd","GET, Standard / IT, per 1,000"],["getIA","GET, IA classes, per 1,000"],["getGIR","GET, Glacier Instant, per 1,000"],
+      ["retIA","Retrieval, IA classes, per GB"],["retGIR","Retrieval, Glacier Instant, per GB"]]],
+    ["Glacier restores", [
+      ["gfrExpGB","Flexible expedited, per GB"],["gfrExpReq","Flexible expedited, per 1,000 req"],
+      ["gfrStdGB","Flexible standard, per GB"],["gfrStdReq","Flexible standard, per 1,000 req"],
+      ["gfrBulkGB","Flexible bulk, per GB"],["gfrBulkReq","Flexible bulk, per 1,000 req"],
+      ["gdaStdGB","Deep Archive standard, per GB"],["gdaStdReq","Deep Archive standard, per 1,000 req"],
+      ["gdaBulkGB","Deep Archive bulk, per GB"],["gdaBulkReq","Deep Archive bulk, per 1,000 req"]]],
+    ["Data transfer out (per GB)", [
+      ["eg1","Internet, first 10 TB/month"],["eg2","Internet, next 40 TB/month"],["eg3","Internet, next 100 TB/month"],
+      ["eg4","Internet, over 150 TB/month"],["egRegion","To another AWS region"]]],
+    ["CHPC Pando (Ceph archive)", [
+      ["pandoTB","Price per TB, incl. 15% install/maintenance fee"],["pandoYears","Years covered by one purchase"],
+      ["elmTB","Elm (Protected Environment) price per TB, incl. fee"]]],
+    ["PHI / HIPAA controls", [
+      ["kmsKey","KMS customer-managed key, per month"],["kmsReq","KMS requests, per 10,000"],["ctData","CloudTrail data events, per 100,000"]]]
+  ];
+  let P = Object.assign({}, DEFAULTS);
+  const $ = (id) => document.getElementById(id);
+  let mode = "total";
+  let pickSel = null; // null = lowest complete cost; "cheapest" = lowest storage total; otherwise a class id
+
+  // ---------- helpers ----------
+  const TB = 1024;
+  function money(x) {
+    const m = 1 + (num("markup") / 100);
+    x = x * m;
+    if (!isFinite(x)) return "–";
+    if (Math.abs(x) >= 1000) return "$" + Math.round(x).toLocaleString("en-US");
+    if (Math.abs(x) >= 1) return "$" + x.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    if (x === 0) return "$0";
+    return "$" + x.toFixed(x < 0.01 ? 4 : 2);
+  }
+  function num(id) { const v = parseFloat($(id).value); return isFinite(v) ? v : 0; }
+  function fmtSize(gb) {
+    if (gb >= 1048576) return (gb / 1048576).toLocaleString("en-US", { maximumFractionDigits: 2 }) + " PB";
+    if (gb >= TB) return (gb / TB).toLocaleString("en-US", { maximumFractionDigits: 2 }) + " TB";
+    return gb.toLocaleString("en-US", { maximumFractionDigits: 2 }) + " GB";
+  }
+  function fmtHours(h) {
+    if (h <= 0) return "Immediate";
+    if (h < 1 / 60) return "Under 1 min";
+    if (h < 1) return Math.round(h * 60) + " min";
+    if (h < 48) return (h < 10 ? h.toFixed(1) : Math.round(h)) + " hours";
+    return (h / 24).toFixed(1) + " days";
+  }
+  function pillClass(h) { return h <= 0.01 ? "instant" : h <= 1 ? "mins" : h <= 24 ? "hours" : "days"; }
+  function tiered(gb, tiers) { // tiers: [[sizeGB, rate], ...] last size Infinity
+    let left = gb, cost = 0;
+    for (const [size, rate] of tiers) { const take = Math.min(left, size); cost += take * rate; left -= take; if (left <= 0) break; }
+    return cost;
+  }
+  const stdTiers = () => [[50 * TB, P.stdT1], [450 * TB, P.stdT2], [Infinity, P.stdT3]];
+  const stdMonthly = (gb) => tiered(gb, stdTiers());
+  function egressInternet(gbTotal, months, free) {
+    const perMonth = gbTotal / months;
+    const billable = Math.max(0, perMonth - (free ? 100 : 0));
+    return months * tiered(billable, [[10 * TB, P.eg1], [40 * TB, P.eg2], [100 * TB, P.eg3], [Infinity, P.eg4]]);
+  }
+  function downloadHours(gb) { const gbps = Math.max(num("gbps"), 0.001); return (gb * 1073741824 * 8) / (gbps * 1e9 * 0.8) / 3600; }
+
+  // ---------- core model ----------
+  function totalGB() {
+    if (mode === "total") return num("sizeVal") * parseFloat($("sizeUnit").value);
+    return num("nSamples") * num("gbPerSample");
+  }
+
+  function storageClasses(gb, objects, months) {
+    const ohGlacierGB = objects * 32 / 1048576, ohStdGB = objects * 8 / 1048576;
+    const flat = (rate) => gb * rate;
+    const phiOn = $("phi").checked, drOn = phiOn && $("phiDR").checked;
+    const rows = [];
+    function add(r) {
+      const billedMonths = Math.max(months, r.minMonths || 0);
+      let storage = 0;
+      for (let m = 1; m <= billedMonths; m++) storage += r.monthly(m);
+      const monitor = (r.monitor || 0) * billedMonths;
+      const upload = objects / 1000 * r.put;
+      r.total = storage + monitor + upload;
+      r.steady = r.monthly(Math.max(billedMonths, 7)) + (r.monitor || 0);
+      r.year1 = (() => { let s = 0; for (let m = 1; m <= 12; m++) s += r.monthly(m); return s + (r.monitor || 0) * 12 + upload; })();
+      r.upload = upload; r.billedMonths = billedMonths;
+      r.phiCost = 0;
+      if (phiOn) {
+        // KMS key for the whole term + KMS/CloudTrail on every upload; optional DR replica in Deep Archive (180-day minimum).
+        const drMonthly = drOn ? (gb + ohGlacierGB) * P.gda + ohStdGB * P.stdT1 : 0;
+        const drMonths = Math.max(billedMonths, 6);
+        const oneTime = objects / 10000 * P.kmsReq + objects / 100000 * P.ctData +
+          (drOn ? gb * P.egRegion + objects / 1000 * P.putGDA + objects / 100000 * P.ctData : 0);
+        r.phiCost = P.kmsKey * billedMonths + drMonthly * drMonths + oneTime;
+        r.total += r.phiCost;
+        r.steady += P.kmsKey + drMonthly;
+        r.year1 += (P.kmsKey + drMonthly) * 12 + oneTime;
+      }
+      rows.push(r);
+    }
+    add({ id: "std", name: "S3 Standard", note: "Active analysis data; multi-AZ", access: "Milliseconds", accessH: 0, min: "None",
+      monthly: () => stdMonthly(gb), put: P.putStd });
+    const itMon = objects / 1000 * P.itMon;
+    add({ id: "it", name: "Intelligent-Tiering", note: "Auto-tiers untouched data; no retrieval fees", access: "Milliseconds", accessH: 0, min: "None",
+      monthly: (m) => m === 1 ? stdMonthly(gb) : m <= 3 ? flat(P.itIA) : flat(P.itAIA), monitor: itMon, put: P.putIT });
+    add({ id: "itA", name: "Intelligent-Tiering, archive tiers on", note: "Archive Access at 90 days, Deep Archive Access at 180 days", access: "Hours once archived", accessH: 12, min: "None",
+      monthly: (m) => m === 1 ? stdMonthly(gb) : m <= 3 ? flat(P.itIA) : m <= 6 ? flat(P.itAA) : flat(P.itDAA), monitor: itMon, put: P.putIT });
+    add({ id: "sia", name: "Standard-IA", note: "Accessed a few times a year; multi-AZ", access: "Milliseconds", accessH: 0, min: "30 days", minMonths: 1,
+      monthly: () => flat(P.sia), put: P.putIA });
+    add({ id: "ozia", name: "One Zone-IA", note: "Single AZ; for re-creatable copies only", access: "Milliseconds", accessH: 0, min: "30 days", minMonths: 1,
+      monthly: () => flat(P.ozia), put: P.putIA });
+    add({ id: "gir", name: "Glacier Instant Retrieval", note: "Archive that still needs instant reads", access: "Milliseconds", accessH: 0, min: "90 days", minMonths: 3,
+      monthly: () => flat(P.gir), put: P.putGIR });
+    add({ id: "gfr", name: "Glacier Flexible Retrieval", note: "Archive; restore in minutes to hours", access: "1 min – 12 hours", accessH: 5, min: "90 days", minMonths: 3,
+      monthly: () => (gb + ohGlacierGB) * P.gfr + ohStdGB * P.stdT1, put: P.putGFR });
+    add({ id: "gda", name: "Glacier Deep Archive", note: "Long-term retention; restore in 12–48 hours", access: "12 – 48 hours", accessH: 12, min: "180 days", minMonths: 6,
+      monthly: () => (gb + ohGlacierGB) * P.gda + ohStdGB * P.stdT1, put: P.putGDA });
+    return rows;
+  }
+
+  function retrievalOptions(rgb, robj) {
+    const days = Math.max(1, num("restoreDays"));
+    const tempCopy = stdMonthly(rgb) * days / 30;
+    // Restored Intelligent-Tiering objects move back to Frequent Access and stay there at least 30 days.
+    const itBack = stdMonthly(rgb);
+    // With PHI controls on, every read also costs a KMS request and a CloudTrail data event.
+    const phiRead = $("phi").checked ? robj / 10000 * P.kmsReq + robj / 100000 * P.ctData : 0;
+    const get = (rate) => robj / 1000 * rate + phiRead;
+    // AWS restores large datasets at up to 1-2 PB/day per account; use 1 PB/day as the conservative floor.
+    const thruH = rgb / 1048576 * 24;
+    const tooMany = robj > 500;
+    const R = (cls, opt, hrs, txt, fee, req, temp, flag) => {
+      const wait = Math.max(hrs, thruH);
+      const waitTxt = wait > hrs + 0.01 ? "~" + fmtHours(wait) + " (dataset size)" : txt;
+      return { cls, opt, wait, waitTxt, fee, req, temp, flag, restore: true };
+    };
+    const expFlag = tooMany ? "Meant for urgent requests of up to a few hundred files; not practical for " + robj.toLocaleString("en-US") + " files" : "";
+    return [
+      { g: "Instant access classes" },
+      { cls: "S3 Standard", opt: "Direct read", wait: 0, waitTxt: "Milliseconds", fee: 0, req: get(P.getStd), temp: 0 },
+      { cls: "Intelligent-Tiering (Frequent / Infrequent / Archive Instant)", opt: "Direct read", wait: 0, waitTxt: "Milliseconds", fee: 0, req: get(P.getStd), temp: 0 },
+      { cls: "Standard-IA", opt: "Direct read", wait: 0, waitTxt: "Milliseconds", fee: rgb * P.retIA, req: get(P.getIA), temp: 0 },
+      { cls: "One Zone-IA", opt: "Direct read", wait: 0, waitTxt: "Milliseconds", fee: rgb * P.retIA, req: get(P.getIA), temp: 0 },
+      { cls: "Glacier Instant Retrieval", opt: "Direct read", wait: 0, waitTxt: "Milliseconds", fee: rgb * P.retGIR, req: get(P.getGIR), temp: 0 },
+      { g: "Restore required first" },
+      R("Intelligent-Tiering Archive Access", "Expedited", 5 / 60, "1–5 minutes", rgb * P.gfrExpGB, robj / 1000 * P.gfrExpReq + get(P.getStd), itBack, expFlag),
+      R("Intelligent-Tiering Archive Access", "Standard", 5, "3–5 hours", 0, get(P.getStd), itBack),
+      R("Intelligent-Tiering Archive Access", "Bulk", 12, "5–12 hours", 0, get(P.getStd), itBack),
+      R("Intelligent-Tiering Deep Archive Access", "Standard", 12, "Within 12 hours", 0, get(P.getStd), itBack),
+      R("Intelligent-Tiering Deep Archive Access", "Bulk", 48, "Within 48 hours", 0, get(P.getStd), itBack),
+      R("Glacier Flexible Retrieval", "Expedited", 5 / 60, "1–5 minutes", rgb * P.gfrExpGB, robj / 1000 * P.gfrExpReq + get(P.getStd), tempCopy, expFlag),
+      R("Glacier Flexible Retrieval", "Standard", 5, "3–5 hours", rgb * P.gfrStdGB, robj / 1000 * P.gfrStdReq + get(P.getStd), tempCopy),
+      R("Glacier Flexible Retrieval", "Bulk", 12, "5–12 hours", rgb * P.gfrBulkGB, robj / 1000 * P.gfrBulkReq + get(P.getStd), tempCopy),
+      R("Glacier Deep Archive", "Standard", 12, "Within 12 hours", rgb * P.gdaStdGB, robj / 1000 * P.gdaStdReq + get(P.getStd), tempCopy),
+      R("Glacier Deep Archive", "Bulk", 48, "Within 48 hours", rgb * P.gdaBulkGB, robj / 1000 * P.gdaBulkReq + get(P.getStd), tempCopy)
+    ];
+  }
+
+  // ---------- render ----------
+  function render() {
+    const gb = totalGB();
+    const avg = Math.max(num("avgFile"), 0.001);
+    const objects = Math.ceil(gb / avg);
+    const months = Math.max(1, Math.round(num("months")));
+    const pct = Math.min(100, Math.max(0, num("retPct"))) / 100;
+    const rgb = gb * pct, robj = Math.ceil(objects * pct);
+    const egMonths = Math.max(1, Math.round(num("egMonths")));
+    const free = $("freeTier").checked;
+    const incEg = $("incEgress").checked;
+    // Egress requires getting the data out first, so restore/retrieval is forced on while egress is included.
+    const resBox = $("incRestore");
+    if (incEg) {
+      if (!resBox.disabled) resBox.dataset.prev = String(resBox.checked);
+      resBox.checked = true; resBox.disabled = true;
+    } else if (resBox.disabled) {
+      resBox.disabled = false; resBox.checked = resBox.dataset.prev !== "false";
+    }
+    $("restoreLabel").classList.toggle("locked", incEg);
+    $("restoreHint").hidden = !incEg;
+    const incRet = resBox.checked;
+    // Labels for what the "take it out" part of the complete cost covers.
+    const outWhat = incEg && incRet ? "restore and download" : incRet ? "restore" : incEg ? "download" : "";
+    // "% of data retrieved" drives every take-it-out figure: table columns, summary boxes and the complete cost.
+    const pctNum = Math.round(pct * 1000) / 10;
+    const shareHead = pct >= 1 ? "all" : pctNum + "%";
+    const shareTxt = pct >= 1 ? "all " + fmtSize(gb) : pctNum + "% (" + fmtSize(rgb) + ")";
+    const outHead = incEg && incRet ? "Retrieve + egress " + shareHead : incRet ? "Retrieve " + shareHead + " (no egress)" : incEg ? "Egress " + shareHead + " (no restore)" : "Excluded";
+    const mk = num("markup");
+
+    $("totalPill").textContent = fmtSize(gb) + " total · " + objects.toLocaleString("en-US") + " objects";
+
+    // storage table
+    const rows = storageClasses(gb, objects, months);
+    const cheapest = rows.reduce((a, b) => (b.total < a.total ? b : a));
+    let pick = null; // set after outCost is known
+    // Cost to take the whole dataset out: internet egress (same for every class) plus the cheapest way to read it back from each class.
+    const egAll = egressInternet(rgb, egMonths, free);
+    const full = retrievalOptions(rgb, robj);
+    const tot = (o) => o.fee + o.req + o.temp;
+    const outMap = { std: [full[1], "Direct read"], it: [full[2], "Direct read"], itA: [full[11], "Bulk restore, up to 48 h"],
+      sia: [full[3], "Retrieval fee $" + P.retIA + "/GB"], ozia: [full[4], "Retrieval fee $" + P.retIA + "/GB"], gir: [full[5], "Retrieval fee $" + P.retGIR + "/GB"],
+      gfr: [full[14], "Bulk restore, 5–12 h"], gda: [full[16], "Bulk restore, up to 48 h"] };
+    for (const r of rows) { const [o, how] = outMap[r.id]; r.outCost = (incEg ? egAll : 0) + (incRet ? tot(o) : 0); r.outHow = incRet ? how : (incEg ? "Restore excluded" : "Restore and egress excluded"); }
+    const best = rows.reduce((a, b) => (b.total + b.outCost < a.total + a.outCost ? b : a));
+    // CHPC Pando: one-time purchase per whole TB, covering a fixed term (5 years); a longer term needs another purchase.
+    const pTB = Math.ceil(gb / 1024 - 1e-9), pTermMo = Math.max(1, P.pandoYears * 12), pPeriods = Math.ceil(months / pTermMo);
+    const pando = { id: "pando", chpc: true, rate: P.pandoTB, name: "CHPC Pando (Ceph archive)", total: pTB * P.pandoTB * pPeriods, outCost: 0, tb: pTB, periods: pPeriods };
+    const elm = { id: "elm", chpc: true, rate: P.elmTB, name: "CHPC Elm (Protected Environment archive)", total: pTB * P.elmTB * pPeriods, outCost: 0, tb: pTB, periods: pPeriods };
+    pick = pickSel === "cheapest" ? cheapest : pickSel === "pando" ? pando : pickSel === "elm" ? elm : (pickSel && rows.find(r => r.id === pickSel)) || best;
+    let h = '<thead><tr><th>Storage class</th><th class="num">Monthly (steady)</th><th class="num">First 12 months</th><th class="num">Total, ' + months + ' mo</th><th class="num">Egress ' + (pct >= 1 ? "all data" : shareHead + " of data") + '</th><th class="num">' + outHead + '</th><th>First-byte access</th><th>Minimum</th></tr></thead><tbody>';
+    for (const r of rows) {
+      const minNote = (r.billedMonths > months ? '<span class="note">Billed for ' + r.billedMonths + ' months minimum</span>' : "") +
+        (r.phiCost ? '<span class="note">Incl. ' + money(r.phiCost) + ' PHI controls</span>' : "");
+      h += '<tr data-id="' + r.id + '" class="pickrow' + (r === cheapest ? " best" : "") + (r === pick ? " picked" : "") + '" title="Use this class for the complete cost"><td><span class="cls">' + r.name + '</span><span class="note">' + r.note + '</span></td>' +
+        '<td class="num">' + money(r.steady) + '</td><td class="num">' + money(r.year1) + '</td><td class="num"><strong>' + money(r.total) + '</strong>' + minNote + '</td>' +
+        '<td class="num">' + (incEg ? money(egAll) : '<span class="note">Not included</span>') + '</td><td class="num"><strong>' + money(r.outCost) + '</strong><span class="note">' + r.outHow + '</span></td>' +
+        '<td><span class="pill ' + pillClass(r.accessH) + '">' + r.access + '</span></td><td>' + r.min + '</td></tr>';
+    }
+    $("storageTbl").innerHTML = h + "</tbody>";
+
+    // retrieval table
+    const dlH = downloadHours(rgb);
+    $("retLead").textContent = "Cost and time to retrieve " + fmtSize(rgb) + " (" + Math.round(pct * 100) + "% of the dataset, " + robj.toLocaleString("en-US") + " objects). Download at " + num("gbps") + " Gbps takes about " + fmtHours(dlH) + ". Egress fees are in the next section.";
+    const opts = retrievalOptions(rgb, robj);
+    h = '<thead><tr><th>Stored in</th><th>Option</th><th>Restore wait</th><th class="num">Ready to use</th><th class="num">Retrieval fee</th><th class="num">Requests</th><th class="num">Restored copy</th><th class="num">Total</th></tr></thead><tbody>';
+    for (const o of opts) {
+      if (o.g) { h += '<tr class="group"><td colspan="8">' + o.g + '</td></tr>'; continue; }
+      const tot = o.fee + o.req + o.temp;
+      h += '<tr><td>' + o.cls + '</td><td>' + o.opt + (o.flag ? '<span class="note" style="color:var(--warn)">' + o.flag + '</span>' : '') + '</td><td><span class="pill ' + pillClass(o.wait) + '">' + o.waitTxt + '</span></td>' +
+        '<td class="num">' + fmtHours(o.wait + dlH) + '</td><td class="num">' + money(o.fee) + '</td><td class="num">' + money(o.req) + '</td><td class="num">' + money(o.temp) + '</td><td class="num"><strong>' + money(tot) + '</strong></td></tr>';
+    }
+    $("retTbl").innerHTML = h + "</tbody>";
+
+    // egress
+    const egInt = egressInternet(rgb, egMonths, free);
+    const egReg = rgb * P.egRegion;
+    $("egLead").textContent = "Moving " + fmtSize(rgb) + " out of S3" + (egMonths > 1 ? ", spread evenly over " + egMonths + " months" : " in a single month") + ". Internet egress is tiered by monthly volume, so larger transfers get a lower average rate.";
+    h = '<thead><tr><th>Destination</th><th class="num">Cost</th><th class="num">Avg per GB</th><th class="num">Transfer time</th><th>Notes</th></tr></thead><tbody>';
+    const per = (c) => rgb > 0 ? "$" + (c / rgb * (1 + mk / 100)).toFixed(4) : "–";
+    h += '<tr><td><span class="cls">Internet</span><span class="note">Client download to their site or another cloud</span></td><td class="num"><strong>' + money(egInt) + '</strong></td><td class="num">' + per(egInt) + '</td><td class="num">' + fmtHours(dlH) + '</td><td>' + (free ? "First 100 GB/month free" : "No free allowance applied") + '</td></tr>';
+    h += '<tr><td><span class="cls">Another AWS region</span><span class="note">Copy or replicate to a different region</span></td><td class="num"><strong>' + money(egReg) + '</strong></td><td class="num">' + per(egReg) + '</td><td class="num">–</td><td>Flat inter-region rate</td></tr>';
+    h += '<tr><td><span class="cls">Same region (EC2, Batch, HealthOmics)</span><span class="note">Analysis inside AWS</span></td><td class="num"><strong>$0</strong></td><td class="num">$0</td><td class="num">–</td><td>No transfer charge</td></tr>';
+    h += '<tr><td><span class="cls">AWS Snowball device</span><span class="note">Ship data on hardware</span></td><td class="num">Quote</td><td class="num">–</td><td class="num">~1–2 weeks</td><td>Device fee per job; worth pricing above ~100 TB on slow links</td></tr>';
+    $("egTbl").innerHTML = h + "</tbody>";
+
+    h = '<thead><tr><th class="num">Share taken out</th><th class="num">Volume</th><th class="num">Internet egress</th><th class="num">Inter-region</th><th class="num">Download time</th></tr></thead><tbody>';
+    for (const p of [0.01, 0.05, 0.1, 0.25, 0.5, 1]) {
+      const v = gb * p;
+      h += '<tr><td class="num">' + (p * 100) + '%</td><td class="num">' + fmtSize(v) + '</td><td class="num">' + money(egressInternet(v, egMonths, free)) + '</td><td class="num">' + money(v * P.egRegion) + '</td><td class="num">' + fmtHours(downloadHours(v)) + '</td></tr>';
+    }
+    $("egScen").innerHTML = h + "</tbody>";
+
+    // summary
+    const std = rows.find(r => r.id === "std"), gda = rows.find(r => r.id === "gda");
+    const gdaBulk = opts[opts.length - 1];
+    $("summaryLead").textContent = fmtSize(gb) + " stored for " + months + " months" + (mk ? " · includes " + mk + "% markup" : "") + ($("phi").checked ? " · includes PHI / HIPAA controls" + ($("phiDR").checked ? " and a disaster-recovery copy" : "") : "") + ". Green row in section 02 is the lowest total for this term.";
+    // Lowest end-to-end cost: storage for the term plus retrieving and egressing the full dataset once.
+    const stat = (k, v, d, sel) => {
+      const on = sel && (pickSel === sel);
+      return sel ? '<button type="button" class="stat pick" data-sel="' + sel + '" aria-pressed="' + on + '"><span class="k">' + k + '</span><span class="v">' + v + '</span><span class="d">' + d + '</span></button>'
+                 : '<div class="stat"><span class="k">' + k + '</span><span class="v">' + v + '</span><span class="d">' + d + '</span></div>';
+    };
+    const pickLabel = pickSel ? pick.name : "Lowest complete cost: " + pick.name;
+    $("stats").innerHTML =
+      stat("Lowest total", money(cheapest.total), cheapest.name, "cheapest") +
+      stat("S3 Standard total", money(std.total), money(std.steady) + " per month", "std") +
+      stat("Deep Archive total", money(gda.total), money(gda.steady) + " per month", "gda") +
+      stat(pct >= 1 ? "Full download egress" : "Download egress, " + pctNum + "%", money(egAll), fmtSize(rgb) + " · " + fmtHours(downloadHours(rgb)) + " at " + num("gbps") + " Gbps") +
+      stat("CHPC Pando (Ceph) total", money(pando.total), pando.tb.toLocaleString("en-US") + " TB · " + (pando.periods > 1 ? pando.periods + " × " : "one ") + P.pandoYears + "-yr purchase" + (pando.periods > 1 ? "s" : "") + " · no egress", "pando") +
+      stat("CHPC Elm (PHI) total", money(elm.total), elm.tb.toLocaleString("en-US") + " TB · Protected Environment · " + (elm.periods > 1 ? elm.periods + " × " : "one ") + P.pandoYears + "-yr purchase" + (elm.periods > 1 ? "s" : ""), "elm") +
+      '<div class="stat complete" aria-live="polite"><div><span class="k">' + (pick.chpc || !outWhat ? "Complete cost, storage only" : incEg && incRet ? "Complete cost, store + take it all out" : incRet ? "Complete cost, store + restore (no egress)" : "Complete cost, store + egress (no restore)") + '</span><span class="cname">' + pickLabel + '</span><span class="d">' + (pick.chpc
+        ? pick.tb.toLocaleString("en-US") + ' TB at ' + money(pick.rate) + '/TB, ' + pick.periods + ' purchase' + (pick.periods > 1 ? 's' : '') + ' of ' + P.pandoYears + ' years to cover ' + months + ' months · storage only, no egress or retrieval fees'
+        : money(pick.total) + ' storage' + (pick.billedMonths > months ? ' (billed at the ' + pick.billedMonths + '-month minimum)' : ' for ' + months + ' month' + (months === 1 ? '' : 's')) +
+          (outWhat ? ' + ' + money(pick.outCost) +  ' to ' + outWhat + ' ' + shareTxt : '') +
+          (!incRet ? ' · restore excluded' : '') + (!incEg ? ' · egress excluded' : '')) + '</span>' +
+      '<span class="d hint2">Click a box above or any row in section 02 to change the class' + (pickSel ? ' · <button type="button" class="linkbtn" data-sel="">Show lowest</button>' : '') + '</span></div><span class="v">' + money(pick.total + pick.outCost) + '</span></div>';
+
+    // quote text
+    const L = [];
+    L.push("S3 STORAGE ESTIMATE");
+    L.push("Data: " + fmtSize(gb) + " (" + objects.toLocaleString("en-US") + " files, avg " + avg + " GB)" + (mode === "samples" ? " = " + num("nSamples").toLocaleString("en-US") + " samples x " + num("gbPerSample") + " GB" : ""));
+    L.push("Term: " + months + " months" + (mk ? " | includes " + mk + "% service markup" : ""));
+    if ($("phi").checked) L.push("PHI / HIPAA controls included: KMS encryption key, CloudTrail file-access logging" + ($("phiDR").checked ? ", disaster-recovery copy in another region (Deep Archive)" : "") + ". AWS BAA required (no cost).");
+    L.push((pick.chpc || !outWhat ? "Complete cost (storage only): " : "Complete cost (store + " + outWhat + " " + shareTxt + (!incRet ? ", restore excluded" : "") + (!incEg ? ", egress excluded" : "") + "): ") + money(pick.total + pick.outCost) + " with " + pick.name);
+    L.push("");
+    L.push("CHPC Pando (Ceph archive), storage only: " + money(pando.total) + " (" + pando.tb + " TB x " + money(P.pandoTB) + "/TB, " + pando.periods + " x " + P.pandoYears + "-year purchase; no egress fees)");
+    L.push("CHPC Elm (Protected Environment archive, for PHI), storage only: " + money(elm.total) + " (" + elm.tb + " TB x " + money(P.elmTB) + "/TB, " + elm.periods + " x " + P.pandoYears + "-year purchase; no egress fees)");
+    L.push("");
+    L.push("STORAGE (monthly steady state / total for term / cost to " + (outWhat || "retrieve") + " " + shareTxt + ")");
+    for (const r of rows) L.push("  " + r.name.padEnd(40) + money(r.steady).padStart(12) + " /mo   " + money(r.total).padStart(12) + (outWhat ? "   " + outWhat + ": " : "   out: ") + money(r.outCost).padStart(10) + "   access: " + r.access);
+    L.push("  Internet egress for " + shareTxt + ": " + money(egAll) + " (same for every class)" + (incEg ? "" : " – not included in complete cost"));
+    L.push("");
+    L.push("RETRIEVAL of " + fmtSize(rgb) + " (fees + time until data is readable)");
+    for (const o of opts) { if (o.g) continue; L.push("  " + (o.cls + " – " + o.opt).padEnd(56) + money(o.fee + o.req + o.temp).padStart(12) + "   " + o.waitTxt + (o.flag ? "  [not practical at this file count]" : "")); }
+    L.push("");
+    L.push("EGRESS of " + fmtSize(rgb));
+    L.push("  To internet: " + money(egInt) + " (about " + fmtHours(dlH) + " at " + num("gbps") + " Gbps)");
+    L.push("  To another AWS region: " + money(egReg));
+    L.push("  To AWS compute in the same region: $0");
+    L.push("");
+    L.push("Based on AWS list prices for US East/West regions; excludes tax and negotiated discounts. Estimates only.");
+    $("quote").value = L.join("\n");
+    lastPick = pick; lastCtx = { months, gb };
+    renderBucket();
+  }
+
+  // ---------- pricing editor ----------
+  function buildPrices() {
+    let h = "";
+    for (const [group, items] of LABELS) {
+      h += "<h3>" + group + "</h3>";
+      for (const [k, label] of items) h += '<label>' + label + '<input type="number" step="any" min="0" id="p_' + k + '" data-k="' + k + '" value="' + P[k] + '"></label>';
+    }
+    $("pgrid").innerHTML = h;
+    $("pgrid").querySelectorAll("input").forEach(inp => inp.addEventListener("input", () => {
+      const v = parseFloat(inp.value); P[inp.dataset.k] = isFinite(v) ? v : 0; save(); render();
+    }));
+  }
+  function save() { try { localStorage.setItem("s3est_prices", JSON.stringify(P)); } catch (e) {} }
+  try { const s = JSON.parse(localStorage.getItem("s3est_prices") || "null"); if (s) P = Object.assign({}, DEFAULTS, s); } catch (e) {}
+
+  // ---------- wiring ----------
+  function setMode(m) {
+    mode = m;
+    $("modeTotal").setAttribute("aria-pressed", m === "total");
+    $("modeSamples").setAttribute("aria-pressed", m === "samples");
+    $("totalBox").hidden = m !== "total";
+    $("sampleBox").hidden = m !== "samples";
+    render();
+  }
+  $("modeTotal").addEventListener("click", () => setMode("total"));
+  $("modeSamples").addEventListener("click", () => setMode("samples"));
+  $("preset").addEventListener("change", () => { const v = $("preset").value; if (v !== "custom") $("gbPerSample").value = v; render(); });
+  $("gbPerSample").addEventListener("input", () => { $("preset").value = "custom"; });
+  document.querySelectorAll("aside input, aside select").forEach(el => el.addEventListener("input", render));
+  $("resetPrices").addEventListener("click", () => { P = Object.assign({}, DEFAULTS); save(); buildPrices(); render(); });
+  $("copyBtn").addEventListener("click", () => {
+    const txt = $("quote").value;
+    const done = (msg) => { $("toast").textContent = msg; setTimeout(() => { $("toast").textContent = ""; }, 2500); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(txt).then(() => done("Copied"), () => { $("quote").select(); done("Selected; press Ctrl/Cmd+C"); });
+    } else { $("quote").select(); done("Selected; press Ctrl/Cmd+C"); }
+  });
+  $("phi").addEventListener("change", () => {
+    $("phiDR").disabled = !$("phi").checked;
+    if (!$("phi").checked) $("phiDR").checked = false;
+    $("phiDRLabel").classList.toggle("locked", !$("phi").checked);
+    render();
+  });
+  $("phiDRLabel").classList.add("locked");
+  $("stats").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-sel]"); if (!b) return;
+    const v = b.dataset.sel || null; pickSel = (v && pickSel === v) ? null : v; render();
+  });
+  $("storageTbl").addEventListener("click", (e) => {
+    const tr = e.target.closest("tr[data-id]"); if (!tr) return;
+    pickSel = pickSel === tr.dataset.id ? null : tr.dataset.id; render();
+    $("summaryCard").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "nearest" });
+  });
+  // ---------- AWS bucket setup (CloudFormation / CLI / lifecycle JSON) ----------
+  const S3CLASS = { std: "STANDARD", it: "INTELLIGENT_TIERING", itA: "INTELLIGENT_TIERING", sia: "STANDARD_IA", ozia: "ONEZONE_IA", gir: "GLACIER_IR", gfr: "GLACIER", gda: "DEEP_ARCHIVE" };
+  let bkTab = "cfn", bkText = "", bkFile = "";
+  let lastPick = null, lastCtx = null;
+  const inFrame = (() => { try { return window.self !== window.top; } catch (e) { return true; } })();
+
+  function bucketOpts() {
+    const name = $("bkName").value.trim();
+    const ok = /^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$/.test(name) && !/\.\./.test(name) && !/^\d+\.\d+\.\d+\.\d+$/.test(name) && !/^xn--/.test(name);
+    const phi = $("phi").checked, dr = phi && $("phiDR").checked;
+    const months = lastCtx.months;
+    return {
+      name: ok ? name : "ucgd-genomic-data", nameOk: ok,
+      project: $("bkProject").value.trim(), client: $("bkClient").value.trim(),
+      expire: $("bkExpire").checked, termDays: Math.ceil(months * 30.44),
+      nc: Math.max(1, Math.round(num("bkNoncurrent"))), phi, dr, months
+    };
+  }
+  function tagList(o, cls) {
+    const t = [{ Key: "ManagedBy", Value: "UCGD" }, { Key: "StorageClass", Value: cls }];
+    if (o.project) t.push({ Key: "Project", Value: o.project.slice(0, 256) });
+    if (o.client) t.push({ Key: "Client", Value: o.client.slice(0, 256) });
+    if (o.phi) t.push({ Key: "DataClassification", Value: "PHI" });
+    return t;
+  }
+  function transitionDays(id) { return id === "sia" || id === "ozia" ? 30 : 0; }
+
+  // S3 API lifecycle shape (put-bucket-lifecycle-configuration)
+  function lifecycleApi(pick, o) {
+    const cls = S3CLASS[pick.id], rules = [];
+    rules.push({ ID: "abort-incomplete-uploads", Filter: { Prefix: "" }, Status: "Enabled", AbortIncompleteMultipartUpload: { DaysAfterInitiation: 7 } });
+    if (cls !== "STANDARD") rules.push({ ID: "move-to-" + cls.toLowerCase().replace(/_/g, "-"), Filter: { Prefix: "" }, Status: "Enabled", Transitions: [{ Days: transitionDays(pick.id), StorageClass: cls }] });
+    if (o.expire) rules.push({ ID: "delete-at-end-of-term", Filter: { Prefix: "" }, Status: "Enabled", Expiration: { Days: o.termDays } });
+    if (o.phi) rules.push({ ID: "expire-old-versions", Filter: { Prefix: "" }, Status: "Enabled", NoncurrentVersionExpiration: { NoncurrentDays: o.nc } });
+    return { Rules: rules };
+  }
+
+  function cfnTemplate(pick, o) {
+    const cls = S3CLASS[pick.id];
+    const arn = { "Fn::GetAtt": ["DataBucket", "Arn"] }, objs = { "Fn::Sub": "${DataBucket.Arn}/*" };
+    const rules = [{ Id: "abort-incomplete-uploads", Status: "Enabled", AbortIncompleteMultipartUpload: { DaysAfterInitiation: 7 } }];
+    if (cls !== "STANDARD") rules.push({ Id: "move-to-" + cls.toLowerCase().replace(/_/g, "-"), Status: "Enabled", Transitions: [{ StorageClass: cls, TransitionInDays: transitionDays(pick.id) }] });
+    if (o.expire) rules.push({ Id: "delete-at-end-of-term", Status: "Enabled", ExpirationInDays: o.termDays });
+    if (o.phi) rules.push({ Id: "expire-old-versions", Status: "Enabled", NoncurrentVersionExpiration: { NoncurrentDays: o.nc } });
+
+    const bucket = {
+      Type: "AWS::S3::Bucket", DeletionPolicy: "Retain", UpdateReplacePolicy: "Retain",
+      Properties: {
+        BucketName: { Ref: "BucketName" },
+        BucketEncryption: { ServerSideEncryptionConfiguration: [o.phi
+          ? { ServerSideEncryptionByDefault: { SSEAlgorithm: "aws:kms", KMSMasterKeyID: { "Fn::GetAtt": ["DataKey", "Arn"] } }, BucketKeyEnabled: true }
+          : { ServerSideEncryptionByDefault: { SSEAlgorithm: "AES256" } }] },
+        PublicAccessBlockConfiguration: { BlockPublicAcls: true, BlockPublicPolicy: true, IgnorePublicAcls: true, RestrictPublicBuckets: true },
+        OwnershipControls: { Rules: [{ ObjectOwnership: "BucketOwnerEnforced" }] },
+        LifecycleConfiguration: { Rules: rules },
+        Tags: tagList(o, cls)
+      }
+    };
+    if (o.phi) bucket.Properties.VersioningConfiguration = { Status: "Enabled" };
+    if (pick.id === "itA") bucket.Properties.IntelligentTieringConfigurations = [{ Id: "archive-tiers", Status: "Enabled", Tierings: [{ AccessTier: "ARCHIVE_ACCESS", Days: 90 }, { AccessTier: "DEEP_ARCHIVE_ACCESS", Days: 180 }] }];
+
+    const denyTls = [{ Sid: "DenyInsecureTransport", Effect: "Deny", Principal: "*", Action: "s3:*", Resource: [arn, objs], Condition: { Bool: { "aws:SecureTransport": "false" } } }];
+    if (o.phi) denyTls.push({ Sid: "DenyOldTls", Effect: "Deny", Principal: "*", Action: "s3:*", Resource: [arn, objs], Condition: { NumericLessThan: { "s3:TlsVersion": "1.2" } } });
+
+    const res = { DataBucket: bucket, DataBucketPolicy: { Type: "AWS::S3::BucketPolicy", Properties: { Bucket: { Ref: "DataBucket" }, PolicyDocument: { Version: "2012-10-17", Statement: denyTls } } } };
+    const params = { BucketName: { Type: "String", Default: o.name, Description: "Globally unique bucket name (lowercase letters, numbers, dots, hyphens).", AllowedPattern: "^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$" } };
+    const outputs = {
+      BucketName: { Description: "Bucket name", Value: { Ref: "DataBucket" } },
+      BucketArn: { Description: "Bucket ARN", Value: arn },
+      UploadCommand: { Description: "Example upload command", Value: { "Fn::Sub": "aws s3 sync ./data s3://${DataBucket}/" + (cls === "STANDARD" ? "" : " --storage-class " + cls) } }
+    };
+    let conditions = null;
+
+    if (o.phi) {
+      res.DataKey = { Type: "AWS::KMS::Key", DeletionPolicy: "Retain", UpdateReplacePolicy: "Retain", Properties: {
+        Description: { "Fn::Sub": "Encryption key for s3://${BucketName} (PHI)" }, EnableKeyRotation: true,
+        KeyPolicy: { Version: "2012-10-17", Statement: [{ Sid: "AccountAdministration", Effect: "Allow", Principal: { AWS: { "Fn::Sub": "arn:${AWS::Partition}:iam::${AWS::AccountId}:root" } }, Action: "kms:*", Resource: "*" }] },
+        Tags: tagList(o, cls) } };
+      res.DataKeyAlias = { Type: "AWS::KMS::Alias", Properties: { AliasName: { "Fn::Sub": "alias/${BucketName}" }, TargetKeyId: { Ref: "DataKey" } } };
+      const trailArn = { "Fn::Sub": "arn:${AWS::Partition}:cloudtrail:${AWS::Region}:${AWS::AccountId}:trail/${AWS::StackName}-data-access" };
+      res.AuditLogBucket = { Type: "AWS::S3::Bucket", DeletionPolicy: "Retain", UpdateReplacePolicy: "Retain", Properties: {
+        BucketEncryption: { ServerSideEncryptionConfiguration: [{ ServerSideEncryptionByDefault: { SSEAlgorithm: "AES256" } }] },
+        PublicAccessBlockConfiguration: { BlockPublicAcls: true, BlockPublicPolicy: true, IgnorePublicAcls: true, RestrictPublicBuckets: true },
+        OwnershipControls: { Rules: [{ ObjectOwnership: "BucketOwnerEnforced" }] },
+        Tags: tagList(o, "STANDARD") } };
+      res.AuditLogBucketPolicy = { Type: "AWS::S3::BucketPolicy", Properties: { Bucket: { Ref: "AuditLogBucket" }, PolicyDocument: { Version: "2012-10-17", Statement: [
+        { Sid: "CloudTrailAclCheck", Effect: "Allow", Principal: { Service: "cloudtrail.amazonaws.com" }, Action: "s3:GetBucketAcl", Resource: { "Fn::GetAtt": ["AuditLogBucket", "Arn"] }, Condition: { StringEquals: { "aws:SourceArn": trailArn } } },
+        { Sid: "CloudTrailWrite", Effect: "Allow", Principal: { Service: "cloudtrail.amazonaws.com" }, Action: "s3:PutObject", Resource: { "Fn::Sub": "${AuditLogBucket.Arn}/AWSLogs/${AWS::AccountId}/*" }, Condition: { StringEquals: { "s3:x-amz-acl": "bucket-owner-full-control", "aws:SourceArn": trailArn } } },
+        { Sid: "DenyInsecureTransport", Effect: "Deny", Principal: "*", Action: "s3:*", Resource: [{ "Fn::GetAtt": ["AuditLogBucket", "Arn"] }, { "Fn::Sub": "${AuditLogBucket.Arn}/*" }], Condition: { Bool: { "aws:SecureTransport": "false" } } }
+      ] } } };
+      res.DataAccessTrail = { Type: "AWS::CloudTrail::Trail", DependsOn: "AuditLogBucketPolicy", Properties: {
+        TrailName: { "Fn::Sub": "${AWS::StackName}-data-access" }, IsLogging: true, S3BucketName: { Ref: "AuditLogBucket" },
+        EnableLogFileValidation: true, IncludeGlobalServiceEvents: false, IsMultiRegionTrail: false,
+        EventSelectors: [{ ReadWriteType: "All", IncludeManagementEvents: false, DataResources: [{ Type: "AWS::S3::Object", Values: [{ "Fn::Sub": "${DataBucket.Arn}/" }] }] }],
+        Tags: tagList(o, "STANDARD") } };
+      outputs.KmsKeyArn = { Description: "KMS key that encrypts the data", Value: { "Fn::GetAtt": ["DataKey", "Arn"] } };
+      outputs.AuditLogBucket = { Description: "Bucket holding CloudTrail file-access logs", Value: { Ref: "AuditLogBucket" } };
+    }
+    if (o.dr) {
+      params.ReplicaBucketArn = { Type: "String", Default: "", Description: "ARN of an existing, versioned bucket in another region for the disaster-recovery copy. Leave blank to skip replication.", AllowedPattern: "^$|^arn:aws[a-z-]*:s3:::[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$" };
+      params.ReplicaKmsKeyArn = { Type: "String", Default: "", Description: "ARN of the KMS key in the replica bucket's region. Required when ReplicaBucketArn is set.", AllowedPattern: "^$|^arn:aws[a-z-]*:kms:[a-z0-9-]+:[0-9]{12}:key/[a-zA-Z0-9-]+$" };
+      conditions = { HasReplica: { "Fn::And": [{ "Fn::Not": [{ "Fn::Equals": [{ Ref: "ReplicaBucketArn" }, ""] }] }, { "Fn::Not": [{ "Fn::Equals": [{ Ref: "ReplicaKmsKeyArn" }, ""] }] }] } };
+      res.ReplicationRole = { Type: "AWS::IAM::Role", Condition: "HasReplica", Properties: {
+        AssumeRolePolicyDocument: { Version: "2012-10-17", Statement: [{ Effect: "Allow", Principal: { Service: "s3.amazonaws.com" }, Action: "sts:AssumeRole" }] },
+        Policies: [{ PolicyName: "replicate-to-dr", PolicyDocument: { Version: "2012-10-17", Statement: [
+          { Effect: "Allow", Action: ["s3:GetReplicationConfiguration", "s3:ListBucket"], Resource: { "Fn::Sub": "arn:${AWS::Partition}:s3:::${BucketName}" } },
+          { Effect: "Allow", Action: ["s3:GetObjectVersionForReplication", "s3:GetObjectVersionAcl", "s3:GetObjectVersionTagging"], Resource: { "Fn::Sub": "arn:${AWS::Partition}:s3:::${BucketName}/*" } },
+          { Effect: "Allow", Action: ["s3:ReplicateObject", "s3:ReplicateDelete", "s3:ReplicateTags"], Resource: { "Fn::Sub": "${ReplicaBucketArn}/*" } },
+          { Effect: "Allow", Action: ["kms:Decrypt"], Resource: { "Fn::GetAtt": ["DataKey", "Arn"] } },
+          { Effect: "Allow", Action: ["kms:Encrypt", "kms:GenerateDataKey"], Resource: { Ref: "ReplicaKmsKeyArn" } }
+        ] } }] } };
+      bucket.Properties.ReplicationConfiguration = { "Fn::If": ["HasReplica", {
+        Role: { "Fn::GetAtt": ["ReplicationRole", "Arn"] },
+        Rules: [{ Id: "dr-copy-deep-archive", Status: "Enabled", Priority: 1, Filter: { Prefix: "" }, DeleteMarkerReplication: { Status: "Disabled" },
+          SourceSelectionCriteria: { SseKmsEncryptedObjects: { Status: "Enabled" } },
+          Destination: { Bucket: { Ref: "ReplicaBucketArn" }, StorageClass: "DEEP_ARCHIVE", EncryptionConfiguration: { ReplicaKmsKeyID: { Ref: "ReplicaKmsKeyArn" } } } }]
+      }, { Ref: "AWS::NoValue" }] };
+    }
+    const est = money(pick.steady) + "/month steady, " + money(pick.total) + " for " + o.months + " months";
+    const t = { AWSTemplateFormatVersion: "2010-09-09",
+      Description: ("UCGD genomic data bucket: " + pick.name + (o.phi ? ", PHI controls" : "") + (o.dr ? ", DR copy" : "") + ". Estimated " + est + ". Generated " + new Date().toISOString().slice(0, 10) + " by the UCGD Genomic Data Storage Estimator.").slice(0, 1024),
+      Parameters: params };
+    if (conditions) t.Conditions = conditions;
+    t.Resources = res; t.Outputs = outputs;
+    return t;
+  }
+
+  function cliScript(pick, o) {
+    const cls = S3CLASS[pick.id], B = o.name, j = (x) => JSON.stringify(x);
+    const L = [];
+    L.push("#!/usr/bin/env bash");
+    L.push("# UCGD Genomic Data Storage Estimator, generated " + new Date().toISOString().slice(0, 10));
+    L.push("# Applies " + pick.name + " settings" + (o.phi ? " with PHI / HIPAA controls" : "") + " to an EXISTING bucket.");
+    L.push("# Review before running. Requires the AWS CLI v2 and permission to change bucket settings.");
+    L.push("set -euo pipefail");
+    L.push("");
+    L.push('BUCKET="' + B + '"');
+    L.push('REGION="${REGION:-us-west-2}"');
+    L.push("");
+    L.push("# 1. Block all public access and disable ACLs");
+    L.push('aws s3api put-public-access-block --bucket "$BUCKET" --region "$REGION" \\');
+    L.push("  --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true");
+    L.push('aws s3api put-bucket-ownership-controls --bucket "$BUCKET" --region "$REGION" \\');
+    L.push("  --ownership-controls '" + j({ Rules: [{ ObjectOwnership: "BucketOwnerEnforced" }] }) + "'");
+    L.push("");
+    if (o.phi) {
+      L.push("# 2. Create a KMS key (rotated yearly) and turn on default encryption with it");
+      L.push('KMS_KEY_ARN="$(aws kms create-key --region "$REGION" --description "Encryption key for s3://$BUCKET (PHI)" --query KeyMetadata.Arn --output text)"');
+      L.push('aws kms enable-key-rotation --region "$REGION" --key-id "$KMS_KEY_ARN"');
+      L.push('aws kms create-alias --region "$REGION" --alias-name "alias/$BUCKET" --target-key-id "$KMS_KEY_ARN"');
+      L.push('aws s3api put-bucket-encryption --bucket "$BUCKET" --region "$REGION" \\');
+      L.push("  --server-side-encryption-configuration '{\"Rules\":[{\"ApplyServerSideEncryptionByDefault\":{\"SSEAlgorithm\":\"aws:kms\",\"KMSMasterKeyID\":\"'\"$KMS_KEY_ARN\"'\"},\"BucketKeyEnabled\":true}]}'");
+      L.push("");
+      L.push("# 3. Keep previous versions of every file (protects against accidental overwrite or deletion)");
+      L.push('aws s3api put-bucket-versioning --bucket "$BUCKET" --region "$REGION" --versioning-configuration Status=Enabled');
+    } else {
+      L.push("# 2. Default encryption with S3-managed keys");
+      L.push('aws s3api put-bucket-encryption --bucket "$BUCKET" --region "$REGION" \\');
+      L.push("  --server-side-encryption-configuration '" + j({ Rules: [{ ApplyServerSideEncryptionByDefault: { SSEAlgorithm: "AES256" } }] }) + "'");
+    }
+    L.push("");
+    L.push("# " + (o.phi ? "4" : "3") + ". Lifecycle rules: storage class, cleanup" + (o.expire ? ", end-of-term deletion" : ""));
+    L.push("cat > lifecycle.json <<'JSON'");
+    L.push(JSON.stringify(lifecycleApi(pick, o), null, 2));
+    L.push("JSON");
+    L.push('aws s3api put-bucket-lifecycle-configuration --bucket "$BUCKET" --region "$REGION" --lifecycle-configuration file://lifecycle.json');
+    if (pick.id === "itA") {
+      L.push("");
+      L.push("# Intelligent-Tiering archive tiers (Archive Access at 90 days, Deep Archive Access at 180 days)");
+      L.push('aws s3api put-bucket-intelligent-tiering-configuration --bucket "$BUCKET" --region "$REGION" --id archive-tiers \\');
+      L.push("  --intelligent-tiering-configuration '" + j({ Id: "archive-tiers", Status: "Enabled", Tierings: [{ Days: 90, AccessTier: "ARCHIVE_ACCESS" }, { Days: 180, AccessTier: "DEEP_ARCHIVE_ACCESS" }] }) + "'");
+    }
+    L.push("");
+    const pol = [{ Sid: "DenyInsecureTransport", Effect: "Deny", Principal: "*", Action: "s3:*", Resource: ["arn:aws:s3:::" + B, "arn:aws:s3:::" + B + "/*"], Condition: { Bool: { "aws:SecureTransport": "false" } } }];
+    if (o.phi) pol.push({ Sid: "DenyOldTls", Effect: "Deny", Principal: "*", Action: "s3:*", Resource: ["arn:aws:s3:::" + B, "arn:aws:s3:::" + B + "/*"], Condition: { NumericLessThan: { "s3:TlsVersion": "1.2" } } });
+    L.push("# Require encrypted connections (HTTPS" + (o.phi ? ", TLS 1.2 or newer" : "") + "). This replaces any existing bucket policy.");
+    L.push('aws s3api put-bucket-policy --bucket "$BUCKET" --region "$REGION" --policy \'' + j({ Version: "2012-10-17", Statement: pol }) + "'");
+    L.push("");
+    L.push("# Cost-tracking tags. This replaces any existing bucket tags.");
+    L.push('aws s3api put-bucket-tagging --bucket "$BUCKET" --region "$REGION" --tagging \'' + j({ TagSet: tagList(o, cls) }).replace(/'/g, "'\\''") + "'");
+    if (o.phi) {
+      L.push("");
+      L.push("# File-access audit logging: add S3 data events for this bucket to an existing CloudTrail trail.");
+      L.push("# Set TRAIL to your trail name, or use the CloudFormation template, which creates the trail for you.");
+      L.push('# TRAIL="your-trail-name"');
+      L.push('# aws cloudtrail put-event-selectors --region "$REGION" --trail-name "$TRAIL" \\');
+      L.push("#   --event-selectors '" + j([{ ReadWriteType: "All", IncludeManagementEvents: true, DataResources: [{ Type: "AWS::S3::Object", Values: ["arn:aws:s3:::" + B + "/"] }] }]) + "'");
+    }
+    if (o.dr) {
+      L.push("");
+      L.push("# Disaster-recovery copy: replication needs a versioned bucket and KMS key in another region.");
+      L.push("# The CloudFormation template sets this up; see the notes under the generated output.");
+    }
+    L.push("");
+    L.push('echo "Done. Upload with:"');
+    L.push('echo "  aws s3 sync ./data s3://$BUCKET/' + (cls === "STANDARD" ? "" : " --storage-class " + cls) + '"');
+    return L.join("\n");
+  }
+
+  function renderBucket() {
+    if (!lastPick) return;
+    const pick = lastPick, o = bucketOpts();
+    $("bkNcLabel").hidden = !o.phi;
+    $("bkName").setAttribute("aria-invalid", String(!o.nameOk));
+    $("bkErr").hidden = o.nameOk;
+    $("bkErr").textContent = o.nameOk ? "" : "Bucket names use 3–63 lowercase letters, numbers, dots or hyphens, and start and end with a letter or number. Using \"ucgd-genomic-data\" until this is fixed.";
+    document.querySelectorAll(".tabs button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.tab === bkTab)));
+    const chpc = !S3CLASS[pick.id];
+    $("bkCopy").disabled = chpc; $("bkDownload").hidden = chpc || inFrame;
+    if (chpc) {
+      $("bucketLead").textContent = pick.name + " is CHPC storage, not AWS. Select an S3 storage class in the summary boxes or the storage table to generate bucket settings.";
+      $("bkSteps").innerHTML = ""; $("bkOut").textContent = ""; $("bkNotes").innerHTML = ""; bkText = "";
+      return;
+    }
+    const cls = S3CLASS[pick.id];
+    $("bucketLead").textContent = "Bucket settings for the class selected in the summary: " + pick.name + " (" + cls + ")" + (o.phi ? ", with PHI / HIPAA controls" + (o.dr ? " and a disaster-recovery copy" : "") : "") + ". Change the selection above and this updates.";
+    let steps = [];
+    if (bkTab === "cfn") {
+      bkText = JSON.stringify(cfnTemplate(pick, o), null, 2); bkFile = o.name + "-cloudformation.json";
+      steps = ["Copy the template" + (inFrame ? "" : " or download it") + " and save it as <code>" + bkFile + "</code>.",
+        "In the AWS console, switch to <strong>US West (Oregon)</strong>, open <strong>CloudFormation → Create stack → With new resources</strong>, and upload the file.",
+        "Give the stack a name, check the bucket name, " + (o.dr ? "fill in the replica bucket and key ARNs (or leave blank to skip the DR copy), " : "") + "and create the stack.",
+        "When it finishes, the <strong>Outputs</strong> tab shows the bucket name" + (o.phi ? ", KMS key and audit-log bucket" : "") + " and an upload command."];
+    } else if (bkTab === "cli") {
+      bkText = cliScript(pick, o); bkFile = o.name + "-setup.sh";
+      steps = ["Create the bucket first if it doesn't exist: <code>aws s3 mb s3://" + o.name + " --region us-west-2</code>.",
+        "Save the script as <code>" + bkFile + "</code>, review it, then run <code>bash " + bkFile + "</code>.",
+        "The bucket policy and tags commands replace any existing policy or tags on that bucket."];
+    } else {
+      bkText = JSON.stringify(lifecycleApi(pick, o), null, 2); bkFile = "lifecycle.json";
+      steps = ["Save as <code>lifecycle.json</code>.",
+        "Apply it: <code>aws s3api put-bucket-lifecycle-configuration --bucket " + o.name + " --lifecycle-configuration file://lifecycle.json</code>.",
+        "This replaces any lifecycle rules already on the bucket."];
+    }
+    $("bkSteps").innerHTML = steps.map(x => "<li>" + x + "</li>").join("");
+    $("bkOut").textContent = bkText;
+    const notes = [];
+    if (cls !== "STANDARD") notes.push("Upload with <code>--storage-class " + cls + "</code> so files go straight into " + pick.name + ". The lifecycle rule also moves anything uploaded without it" + (transitionDays(pick.id) ? " after 30 days, the earliest AWS allows for this class" : " within about a day") + ", which costs a small per-file transition fee. This covers providers who upload to your bucket.");
+    notes.push("Every bucket blocks public access, requires HTTPS, encrypts all data by default, and cleans up unfinished uploads after 7 days.");
+    if (o.expire) notes.push("<strong>Deletes all data " + o.termDays + " days after each file is uploaded.</strong> Only use this when the client has agreed the data can be destroyed." + (pick.id === "gda" && o.termDays < 180 ? " Deep Archive still bills the 180-day minimum." : ""));
+    if (o.phi) notes.push("PHI controls: customer-managed KMS key with yearly rotation, versioning with old versions deleted after " + o.nc + " days, TLS 1.2 or newer required, and CloudTrail logging of every file read and write. A signed AWS BAA must be in place, and University approval for PHI in this account.");
+    if (o.dr) notes.push("Disaster-recovery copy: first create a versioned bucket and a KMS key in a second region (for example us-east-2), then enter their ARNs when creating the stack. Replicated files are stored in Deep Archive. Only files uploaded after replication is turned on are copied.");
+    if (pick.id === "itA") notes.push("Intelligent-Tiering archive tiers: files untouched for 90 days move to Archive Access, and after 180 days to Deep Archive Access. Reading them then needs a restore.");
+    $("bkNotes").innerHTML = notes.map(x => "<li>" + x + "</li>").join("");
+  }
+
+  document.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click", () => { bkTab = b.dataset.tab; renderBucket(); }));
+  ["bkName", "bkProject", "bkClient", "bkNoncurrent", "bkExpire"].forEach(id => $(id).addEventListener("input", renderBucket));
+  $("bkCopy").addEventListener("click", () => {
+    const done = (m) => { $("bkToast").textContent = m; setTimeout(() => { $("bkToast").textContent = ""; }, 2500); };
+    const sel = () => { const r = document.createRange(); r.selectNodeContents($("bkOut")); const s = window.getSelection(); s.removeAllRanges(); s.addRange(r); done("Selected; press Ctrl/Cmd+C"); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(bkText).then(() => done("Copied"), sel); else sel();
+  });
+  $("bkDownload").addEventListener("click", () => {
+    try {
+      const blob = new Blob([bkText + "\n"], { type: bkTab === "cli" ? "text/x-shellscript" : "application/json" });
+      const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = bkFile;
+      document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    } catch (e) { $("bkToast").textContent = "Download isn't available here; use Copy."; }
+  });
+
+  buildPrices();
+  render();
+})();
+</script>
+</body>
+</html>
